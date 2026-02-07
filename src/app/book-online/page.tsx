@@ -3,6 +3,8 @@ import BookingWizard from './BookingWizard'
 import PublicHeader from '@/components/PublicHeader'
 import PublicFooter from '@/components/PublicFooter'
 
+export const dynamic = 'force-dynamic'
+
 export default async function PublicBookingPage() {
     const admin = createAdminClient()
 
