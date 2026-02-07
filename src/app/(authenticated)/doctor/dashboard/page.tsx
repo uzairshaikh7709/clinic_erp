@@ -90,14 +90,7 @@ export default async function DoctorDashboard() {
                     bg="bg-emerald-50"
                 />
                 <InfoCard
-                    label="Total Patients"
-                    value={stats.today.toString()} // Placeholder for now or fetch new metric?
-                    // Actually, let's just use a hardcoded reasonable number or fetch count if easy.
-                    // For now, let's keep it simple as requested "clean dashboard".
-                    // I'll leave it as "Total Appts" for now if I can't easily get total patients count without a new query.
-                    // Wait, I can just use a placeholder or "N/A" if I don't want to query.
-                    // Let's query it.
-                    // Actually, I'll just change label to "Total Appointments" and use total length for now.
+                    label="Total Appointments"
                     value={appointments.length.toString()}
                     icon={FileText}
                     color="text-amber-500"
