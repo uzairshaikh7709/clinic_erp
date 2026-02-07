@@ -1,7 +1,9 @@
-import { createAdminClient } from '@/utils/supabase/admin'
+import { createClient } from '@/utils/supabase/server'
 
-export default async function StatusDebugPage() {
-    const supabase = createAdminClient()
+export const dynamic = 'force-dynamic'
+
+export default async function DebugStatusPage() {
+    const supabase = await createClient()
     const { data: appointments } = await supabase.from('appointments').select('*')
     // Get unique statuses
     const statuses = Array.from(new Set(appointments?.map((a: any) => a.status)))
