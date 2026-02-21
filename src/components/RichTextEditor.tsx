@@ -2,7 +2,6 @@
 
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
 import TextAlign from '@tiptap/extension-text-align'
 import {
     Bold, Italic, Underline as UnderlineIcon,
@@ -42,7 +41,6 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
             StarterKit.configure({
                 heading: { levels: [1, 2] },
             }),
-            Underline,
             TextAlign.configure({
                 types: ['heading', 'paragraph'],
             }),

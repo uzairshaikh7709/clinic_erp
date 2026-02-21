@@ -74,6 +74,7 @@ function LoginFormInner({ clinicName, clinicSlug, logoUrl }: { clinicName: strin
 
                             <div className="p-8 pt-6">
                                 <form className="space-y-5" onSubmit={handleSubmit}>
+                                    <input type="hidden" name="clinic_login" value="true" />
                                     {resetSuccess && (
                                         <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm font-medium text-center flex items-center justify-center gap-2">
                                             <CheckCircle size={16} /> Password updated! Please sign in.

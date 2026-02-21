@@ -17,7 +17,7 @@ type Member = {
     created_at: string
 }
 
-export default function TeamClient({ members, ownerId, orgSlug, orgName }: { members: Member[]; ownerId: string; orgSlug: string; orgName: string }) {
+export default function TeamClient({ members, ownerId, orgSlug, orgName, isOwner }: { members: Member[]; ownerId: string; orgSlug: string; orgName: string; isOwner: boolean }) {
     const router = useRouter()
     const [editingUser, setEditingUser] = useState<Member | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
@@ -52,15 +52,15 @@ export default function TeamClient({ members, ownerId, orgSlug, orgName }: { mem
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Team Management</h1>
-                    <p className="text-slate-500 text-sm">Manage doctors and assistants in your clinic</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800">{isOwner ? 'Team Management' : 'My Assistants'}</h1>
+                    <p className="text-slate-500 text-sm">{isOwner ? 'Manage doctors and assistants in your clinic' : 'Manage assistants assigned to you'}</p>
                 </div>
                 <Link href="/doctor/team/create" className="btn btn-primary shadow-lg shadow-blue-500/20 text-sm">
-                    <Plus size={16} className="mr-1.5" /> Add Staff
+                    <Plus size={16} className="mr-1.5" /> {isOwner ? 'Add Staff' : 'Add Assistant'}
                 </Link>
             </div>
 
-            {orgSlug && <BookingLinkCard slug={orgSlug} orgName={orgName} />}
+            {isOwner && orgSlug && <BookingLinkCard slug={orgSlug} orgName={orgName} />}
 
             <div className="card">
                 <div className="p-3 sm:p-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-4">
@@ -103,13 +103,15 @@ export default function TeamClient({ members, ownerId, orgSlug, orgName }: { mem
                                         >
                                             Edit
                                         </button>
-                                        <button
-                                            onClick={() => handleRemove(member.id)}
-                                            disabled={removing === member.id}
-                                            className="text-slate-400 hover:text-red-500 cursor-pointer disabled:opacity-50"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
+                                        {isOwner && (
+                                            <button
+                                                onClick={() => handleRemove(member.id)}
+                                                disabled={removing === member.id}
+                                                className="text-slate-400 hover:text-red-500 cursor-pointer disabled:opacity-50"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                             </div>
@@ -180,13 +182,15 @@ export default function TeamClient({ members, ownerId, orgSlug, orgName }: { mem
                                                 >
                                                     Edit
                                                 </button>
-                                                <button
-                                                    onClick={() => handleRemove(member.id)}
-                                                    disabled={removing === member.id}
-                                                    className="text-slate-400 hover:text-red-500 cursor-pointer disabled:opacity-50"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </button>
+                                                {isOwner && (
+                                                    <button
+                                                        onClick={() => handleRemove(member.id)}
+                                                        disabled={removing === member.id}
+                                                        className="text-slate-400 hover:text-red-500 cursor-pointer disabled:opacity-50"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </td>

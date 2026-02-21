@@ -24,12 +24,9 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
-    // Use getSession() instead of getUser() — reads JWT from cookie locally
-    // without making a network round-trip to Supabase auth servers.
-    // Actual token validation happens in getUserProfile() on the server component.
     const {
-        data: { session },
-    } = await supabase.auth.getSession()
+        data: { user },
+    } = await supabase.auth.getUser()
 
     const path = request.nextUrl.pathname
 
@@ -37,38 +34,54 @@ export async function updateSession(request: NextRequest) {
     if (path === '/' || path.startsWith('/login') || path.startsWith('/auth') || path.startsWith('/book-online')
         || path.startsWith('/clinic') || path.startsWith('/privacy-policy') || path.startsWith('/terms')
         || path.startsWith('/contact') || path.startsWith('/reset-password')) {
-        // Redirect logged-in users away from login pages
+        // Redirect logged-in users away from login pages (and homepage for org staff)
         // Skip redirect if there's an error param (prevents loop when JWT metadata is stale)
-        if (session?.user && !request.nextUrl.searchParams.has('error')
-            && (path === '/login' || /^\/clinic\/[^/]+\/login$/.test(path))) {
-            const role = session.user.user_metadata.role
-            if (role === 'superadmin') return NextResponse.redirect(new URL('/superadmin/dashboard', request.url))
-            if (role === 'doctor') return NextResponse.redirect(new URL('/doctor/dashboard', request.url))
-            if (role === 'assistant') return NextResponse.redirect(new URL('/assistant/dashboard', request.url))
+        if (user && !request.nextUrl.searchParams.has('error')) {
+            const role = user.user_metadata.role
+            const isOrgStaff = user.user_metadata.clinic_id && (role === 'doctor' || role === 'assistant')
+            const isLoginPage = path === '/login' || /^\/clinic\/[^/]+\/login$/.test(path)
+
+            // Org staff should not access the main site homepage or login pages
+            if (isLoginPage || (path === '/' && isOrgStaff)) {
+                if (role === 'superadmin') return NextResponse.redirect(new URL('/superadmin/dashboard', request.url))
+                if (role === 'doctor') return NextResponse.redirect(new URL('/doctor/dashboard', request.url))
+                if (role === 'assistant') return NextResponse.redirect(new URL('/assistant/dashboard', request.url))
+            }
         }
         return supabaseResponse
     }
 
+    // Helper: build login redirect URL based on JWT metadata
+    const getLoginUrl = (u?: { user_metadata?: Record<string, any> } | null, error?: string) => {
+        const meta = u?.user_metadata
+        const slug = meta?.clinic_slug
+        if (slug && (meta?.role === 'doctor' || meta?.role === 'assistant')) {
+            const base = `/clinic/${slug}/login`
+            return error ? `${base}?error=${error}` : base
+        }
+        return error ? `/login?error=${error}` : '/login'
+    }
+
     // Auth Check
-    if (!session) {
+    if (!user) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
     }
 
-    // Role Protection via JWT metadata (fast, no DB call)
-    const role = session.user.user_metadata.role
+    // Role Protection via verified user metadata
+    const role = user.user_metadata.role
 
     if (!role) return supabaseResponse
 
     if (path.startsWith('/superadmin') && role !== 'superadmin') {
-        return NextResponse.redirect(new URL('/login?error=unauthorized', request.url))
+        return NextResponse.redirect(new URL(getLoginUrl(user, 'unauthorized'), request.url))
     }
     if (path.startsWith('/doctor') && role !== 'doctor') {
-        return NextResponse.redirect(new URL('/login?error=unauthorized', request.url))
+        return NextResponse.redirect(new URL(getLoginUrl(user, 'unauthorized'), request.url))
     }
     if (path.startsWith('/assistant') && role !== 'assistant') {
-        return NextResponse.redirect(new URL('/login?error=unauthorized', request.url))
+        return NextResponse.redirect(new URL(getLoginUrl(user, 'unauthorized'), request.url))
     }
 
     return supabaseResponse

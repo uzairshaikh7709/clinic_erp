@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
     Menu, X, LayoutDashboard, Calendar, Users, FileText,
-    Clock, Building2, UserCog, LogOut, LucideIcon, Mail, Globe
+    Clock, Building2, UserCog, LogOut, LucideIcon, Mail, Globe, Award
 } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 
@@ -111,15 +111,12 @@ export function MobileMenu({ role, profile }: { role: string; profile: any }) {
                                     <MobileNavItem href="/doctor/patients" icon={Users} label="My Patients" onClick={close} />
                                     <MobileNavItem href="/doctor/templates" icon={FileText} label="Templates" onClick={close} />
                                     <MobileNavItem href="/doctor/schedule" icon={Clock} label="Schedule" onClick={close} />
-                                    {profile?.is_clinic_owner && (
-                                        <>
-                                            <div className="pt-3 pb-1">
-                                                <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Management</p>
-                                            </div>
-                                            <MobileNavItem href="/doctor/team" icon={UserCog} label="Team" onClick={close} />
-                                            <MobileNavItem href="/doctor/clinic" icon={Globe} label="Clinic Page" onClick={close} />
-                                        </>
-                                    )}
+                                    <MobileNavItem href="/doctor/certifications" icon={Award} label="Certifications" onClick={close} />
+                                    <div className="pt-3 pb-1">
+                                        <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Management</p>
+                                    </div>
+                                    <MobileNavItem href="/doctor/team" icon={UserCog} label={profile?.is_clinic_owner ? 'Team' : 'My Staff'} onClick={close} />
+                                    <MobileNavItem href="/doctor/clinic" icon={Globe} label="Clinic" onClick={close} />
                                 </>
                             )}
 

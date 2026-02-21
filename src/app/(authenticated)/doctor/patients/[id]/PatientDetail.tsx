@@ -4,9 +4,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import {
     ArrowLeft, FileText, Phone, MapPin, Calendar, User,
-    Pill, Clock, Loader2, Edit, ChevronRight
+    Pill, Clock, Loader2, Edit, ChevronRight, Trash2
 } from 'lucide-react'
-import { createWalkInAppointment } from '../actions'
+import { createWalkInAppointment, deletePatient } from '../actions'
+import { useRouter } from 'next/navigation'
 
 function WalkInButton({ patientId }: { patientId: string }) {
     const [loading, setLoading] = useState(false)
@@ -32,6 +33,54 @@ function WalkInButton({ patientId }: { patientId: string }) {
             </button>
             {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
         </div>
+    )
+}
+
+function DeletePatientButton({ patientId }: { patientId: string }) {
+    const [showConfirm, setShowConfirm] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const router = useRouter()
+
+    const handleDelete = async () => {
+        setLoading(true)
+        setError(null)
+        const res = await deletePatient(patientId)
+        if (res.success) {
+            router.push('/doctor/patients')
+        } else {
+            setError(res.error || 'Failed to delete')
+            setLoading(false)
+        }
+    }
+
+    if (showConfirm) {
+        return (
+            <div className="flex items-center gap-2">
+                <span className="text-sm text-red-600 font-semibold">Delete patient and all records?</span>
+                <button
+                    onClick={handleDelete}
+                    disabled={loading}
+                    className="btn btn-sm bg-red-600 text-white hover:bg-red-700"
+                >
+                    {loading ? <Loader2 size={14} className="animate-spin mr-1" /> : <Trash2 size={14} className="mr-1" />}
+                    Confirm
+                </button>
+                <button onClick={() => setShowConfirm(false)} className="btn btn-sm btn-secondary">
+                    Cancel
+                </button>
+                {error && <span className="text-xs text-red-500">{error}</span>}
+            </div>
+        )
+    }
+
+    return (
+        <button
+            onClick={() => setShowConfirm(true)}
+            className="btn btn-sm bg-white border border-red-200 text-red-600 hover:bg-red-50"
+        >
+            <Trash2 size={14} className="mr-1" /> Delete Patient
+        </button>
     )
 }
 
@@ -65,7 +114,10 @@ export default function PatientDetail({ patient, prescriptions }: { patient: any
                             </p>
                         </div>
                     </div>
-                    <WalkInButton patientId={patient.id} />
+                    <div className="flex items-center gap-2">
+                        <WalkInButton patientId={patient.id} />
+                        <DeletePatientButton patientId={patient.id} />
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-5 border-t border-slate-100">

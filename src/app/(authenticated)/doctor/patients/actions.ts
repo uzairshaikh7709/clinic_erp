@@ -44,6 +44,32 @@ export async function registerPatient(prevState: any, formData: FormData) {
     return { success: true, patientId: data.id }
 }
 
+export async function deletePatient(patientId: string) {
+    const profile = await getUserProfile()
+    if (!profile) return { error: 'Unauthorized' }
+    const clinicId = profile.clinic_id!
+
+    const admin = createAdminClient()
+
+    // Delete related records first (appointments, prescriptions)
+    await Promise.all([
+        admin.from('appointments').delete().eq('patient_id', patientId).eq('clinic_id', clinicId),
+        admin.from('prescriptions').delete().eq('patient_id', patientId).eq('clinic_id', clinicId),
+    ])
+
+    const { error } = await admin
+        .from('patients')
+        .delete()
+        .eq('id', patientId)
+        .eq('clinic_id', clinicId)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/doctor/patients')
+    revalidatePath('/assistant/patients')
+    return { success: true }
+}
+
 export async function createWalkInAppointment(patientId: string) {
     const profile = await getUserProfile()
     if (!profile) return { error: 'Unauthorized' }

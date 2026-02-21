@@ -1,15 +1,40 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/admin'
-import { requireClinicOwner } from '@/utils/auth'
+import { requireDoctorWithClinic } from '@/utils/auth'
 import { revalidatePath } from 'next/cache'
 import type { ClinicPageData } from '@/types/database'
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 
+export async function updateOrgDetails(formData: FormData) {
+    const doctor = await requireDoctorWithClinic()
+    const admin = createAdminClient()
+
+    const orgId = formData.get('org_id') as string
+    const name = (formData.get('name') as string)?.trim()
+
+    if (!name) throw new Error('Organization name is required')
+    if (orgId !== doctor.clinic_id) throw new Error('Unauthorized')
+
+    const { error } = await admin
+        .from('organizations')
+        .update({
+            name,
+            address: (formData.get('address') as string)?.trim() || null,
+            phone: (formData.get('phone') as string)?.trim() || null,
+            email: (formData.get('email') as string)?.trim() || null,
+        })
+        .eq('id', doctor.clinic_id)
+
+    if (error) throw new Error('Failed to update organization')
+
+    revalidatePath('/doctor/clinic')
+}
+
 export async function uploadClinicImage(formData: FormData) {
-    const owner = await requireClinicOwner()
+    const doctor = await requireDoctorWithClinic()
     const admin = createAdminClient()
 
     const file = formData.get('file') as File
@@ -19,7 +44,7 @@ export async function uploadClinicImage(formData: FormData) {
     if (file.size > MAX_SIZE) return { error: 'Image must be under 5MB' }
 
     const ext = file.name.split('.').pop() || 'jpg'
-    const path = `${owner.clinic_id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+    const path = `${doctor.clinic_id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
     const buffer = Buffer.from(await file.arrayBuffer())
 
@@ -37,7 +62,7 @@ export async function uploadClinicImage(formData: FormData) {
 }
 
 export async function deleteClinicImage(formData: FormData) {
-    const owner = await requireClinicOwner()
+    const doctor = await requireDoctorWithClinic()
     const admin = createAdminClient()
 
     const url = formData.get('url') as string
@@ -50,15 +75,22 @@ export async function deleteClinicImage(formData: FormData) {
     const path = match[1]
 
     // Ensure the image belongs to this clinic
-    if (!path.startsWith(owner.clinic_id)) return { error: 'Unauthorized' }
+    if (!path.startsWith(doctor.clinic_id)) return { error: 'Unauthorized' }
 
     await admin.storage.from('clinic-images').remove([path])
     return { success: true }
 }
 
 export async function saveClinicPageData(formData: FormData) {
-    const owner = await requireClinicOwner()
+    const doctor = await requireDoctorWithClinic()
     const admin = createAdminClient()
+
+    // Save logo_url directly on the organizations table
+    const logoUrl = (formData.get('logo_url') as string)?.trim() || null
+    await admin
+        .from('organizations')
+        .update({ logo_url: logoUrl })
+        .eq('id', doctor.clinic_id)
 
     const pageData: ClinicPageData = {
         tagline: formData.get('tagline') as string || undefined,
@@ -86,7 +118,7 @@ export async function saveClinicPageData(formData: FormData) {
     const { error } = await admin
         .from('organizations')
         .update({ page_data: pageData })
-        .eq('id', owner.clinic_id)
+        .eq('id', doctor.clinic_id)
 
     if (error) return { error: 'Failed to save clinic page data' }
 

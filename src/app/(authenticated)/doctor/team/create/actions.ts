@@ -1,22 +1,32 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/admin'
-import { requireClinicOwner } from '@/utils/auth'
+import { requireDoctorWithClinic } from '@/utils/auth'
 import { revalidatePath } from 'next/cache'
 
 export async function createStaffMember(formData: FormData) {
-    const owner = await requireClinicOwner()
+    const doctor = await requireDoctorWithClinic()
     const admin = createAdminClient()
-    const clinicId = owner.clinic_id
+    const clinicId = doctor.clinic_id
+    const isOwner = doctor.is_clinic_owner
 
     const email = (formData.get('email') as string)?.trim()?.toLowerCase()
     const password = formData.get('password') as string
     const fullName = (formData.get('full_name') as string)?.trim()
-    const role = formData.get('role') as string
+    let role = formData.get('role') as string
 
     if (!email || !password || !fullName || !role) return { error: 'All fields are required' }
     if (password.length < 8) return { error: 'Password must be at least 8 characters' }
+
+    // Non-owners can only create assistants
+    if (!isOwner) {
+        role = 'assistant'
+    }
+
     if (!['doctor', 'assistant'].includes(role)) return { error: 'Invalid role. Only doctor or assistant allowed.' }
+
+    // Non-owners cannot create doctors
+    if (role === 'doctor' && !isOwner) return { error: 'Only clinic owners can add doctors' }
 
     try {
         // Create auth user
@@ -61,7 +71,10 @@ export async function createStaffMember(formData: FormData) {
         }
 
         if (role === 'assistant') {
-            const assignedDoctorId = formData.get('assigned_doctor_id') as string
+            // Non-owners: force assignment to themselves
+            const assignedDoctorId = isOwner
+                ? (formData.get('assigned_doctor_id') as string)
+                : doctor.doctor_id
 
             const { error: assistantError } = await admin.from('assistants').insert({
                 profile_id: userId,

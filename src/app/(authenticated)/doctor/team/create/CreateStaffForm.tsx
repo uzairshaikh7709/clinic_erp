@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { Loader2, UserPlus } from 'lucide-react'
 import { createStaffMember } from './actions'
 
-export default function CreateStaffForm({ doctors }: { doctors: any[] }) {
+export default function CreateStaffForm({ doctors, isOwner, doctorId }: { doctors: any[]; isOwner: boolean; doctorId: string }) {
     const router = useRouter()
-    const [role, setRole] = useState('doctor')
+    const [role, setRole] = useState(isOwner ? 'doctor' : 'assistant')
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState('')
     const [error, setError] = useState('')
@@ -48,13 +48,13 @@ export default function CreateStaffForm({ doctors }: { doctors: any[] }) {
             <form onSubmit={handleSubmit} className="card">
                 <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center gap-2">
                     <UserPlus size={18} className="text-slate-400" />
-                    <h2 className="font-bold text-slate-800">Staff Details</h2>
+                    <h2 className="font-bold text-slate-800">{isOwner ? 'Staff Details' : 'Assistant Details'}</h2>
                 </div>
                 <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className="label">Full Name</label>
-                            <input name="full_name" required className="input" placeholder="Dr. John Smith" />
+                            <input name="full_name" required className="input" placeholder={isOwner ? 'Dr. John Smith' : 'Jane Doe'} />
                         </div>
                         <div>
                             <label className="label">Email</label>
@@ -66,21 +66,25 @@ export default function CreateStaffForm({ doctors }: { doctors: any[] }) {
                             <label className="label">Password</label>
                             <input name="password" type="password" required className="input" minLength={8} placeholder="Min 8 characters" />
                         </div>
-                        <div>
-                            <label className="label">Role</label>
-                            <select
-                                name="role"
-                                className="select"
-                                value={role}
-                                onChange={e => setRole(e.target.value)}
-                            >
-                                <option value="doctor">Doctor</option>
-                                <option value="assistant">Assistant</option>
-                            </select>
-                        </div>
+                        {isOwner ? (
+                            <div>
+                                <label className="label">Role</label>
+                                <select
+                                    name="role"
+                                    className="select"
+                                    value={role}
+                                    onChange={e => setRole(e.target.value)}
+                                >
+                                    <option value="doctor">Doctor</option>
+                                    <option value="assistant">Assistant</option>
+                                </select>
+                            </div>
+                        ) : (
+                            <input type="hidden" name="role" value="assistant" />
+                        )}
                     </div>
 
-                    {role === 'doctor' && (
+                    {role === 'doctor' && isOwner && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="label">Registration Number</label>
@@ -93,7 +97,7 @@ export default function CreateStaffForm({ doctors }: { doctors: any[] }) {
                         </div>
                     )}
 
-                    {role === 'assistant' && (
+                    {role === 'assistant' && isOwner && (
                         <div>
                             <label className="label">Assign to Doctor</label>
                             <select name="assigned_doctor_id" className="select" required>
@@ -105,9 +109,14 @@ export default function CreateStaffForm({ doctors }: { doctors: any[] }) {
                         </div>
                     )}
 
+                    {/* Non-owner: auto-assign to themselves */}
+                    {!isOwner && (
+                        <input type="hidden" name="assigned_doctor_id" value={doctorId} />
+                    )}
+
                     <div className="pt-2">
                         <button disabled={loading} className="btn btn-primary w-full sm:w-auto min-w-[180px] justify-center">
-                            {loading ? <><Loader2 className="animate-spin mr-2" size={16} /> Creating...</> : 'Create Staff Member'}
+                            {loading ? <><Loader2 className="animate-spin mr-2" size={16} /> Creating...</> : isOwner ? 'Create Staff Member' : 'Create Assistant'}
                         </button>
                     </div>
                 </div>

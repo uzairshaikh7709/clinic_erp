@@ -87,6 +87,15 @@ export async function requireClinicId(): Promise<string> {
     return profile.clinic_id
 }
 
+// Require any doctor with a clinic assignment. Redirects if not.
+export async function requireDoctorWithClinic(): Promise<UserProfile & { clinic_id: string; doctor_id: string }> {
+    const profile = await getUserProfile()
+    if (!profile || profile.role !== 'doctor' || !profile.clinic_id || !profile.doctor_id) {
+        redirect('/login?error=unauthorized')
+    }
+    return profile as UserProfile & { clinic_id: string; doctor_id: string }
+}
+
 // Require clinic owner (doctor who owns the organization). Redirects if not.
 export async function requireClinicOwner(): Promise<UserProfile & { clinic_id: string }> {
     const profile = await getUserProfile()

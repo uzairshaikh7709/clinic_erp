@@ -2,7 +2,7 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { sanitizeHtml } from '@/utils/sanitize-html'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Building2, Calendar, LogIn, MapPin, Phone, Mail, CheckCircle, Clock, ArrowRight } from 'lucide-react'
+import { Building2, Calendar, LogIn, MapPin, Phone, Mail, CheckCircle, Clock, ArrowRight, Star, Users, Stethoscope, Shield } from 'lucide-react'
 import type { Metadata } from 'next'
 import type { ClinicPageData } from '@/types/database'
 
@@ -91,114 +91,200 @@ export default async function ClinicLandingPage({ params }: { params: Promise<{ 
         ...(pd.working_hours && { openingHours: pd.working_hours }),
     }
 
+    const serviceCount = pd.services?.length || 0
+    const contactItems = [org.address, org.phone, org.email].filter(Boolean)
+
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-[#fafbfc]">
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
             />
 
             {/* ───── Header ───── */}
-            <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-100">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+            <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/60">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         {org.logo_url ? (
-                            <Image src={org.logo_url} alt={org.name} width={36} height={36} className="w-9 h-9 rounded-xl object-cover shadow-sm" />
+                            <Image src={org.logo_url} alt={org.name} width={36} height={36} className="w-9 h-9 rounded-xl object-cover" />
                         ) : (
-                            <div className="w-9 h-9 rounded-xl bg-[#0077B6] flex items-center justify-center shadow-sm">
+                            <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center">
                                 <Building2 size={18} className="text-white" />
                             </div>
                         )}
                         <span className="font-bold text-lg tracking-tight text-slate-900">{org.name}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <Link
-                            href={`/book-online/${slug}`}
-                            className="hidden sm:inline-flex btn btn-primary text-sm h-9 px-4 shadow-md shadow-blue-500/15"
-                        >
-                            Book Now
-                        </Link>
+                    <div className="flex items-center gap-2 sm:gap-3">
                         <Link
                             href={`/clinic/${slug}/login`}
-                            className="text-sm font-semibold text-slate-500 hover:text-[#0077B6] transition-colors flex items-center gap-1.5"
+                            className="text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1.5 px-3 py-1.5"
                         >
                             <LogIn size={15} /> Staff
+                        </Link>
+                        <Link
+                            href={`/book-online/${slug}`}
+                            className="inline-flex items-center gap-2 h-9 px-5 rounded-full bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 transition-colors"
+                        >
+                            <Calendar size={14} /> <span className="hidden sm:inline">Book Now</span><span className="sm:hidden">Book</span>
                         </Link>
                     </div>
                 </div>
             </header>
 
             {/* ───── Hero ───── */}
-            <section className="relative overflow-hidden bg-gradient-to-br from-[#0077B6] via-[#023e8a] to-[#0096c7] text-white">
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-72 h-72 bg-white/10 rounded-full blur-3xl -translate-y-1/3 translate-x-1/4" />
-                <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-400/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
-                <div className="absolute top-1/2 right-1/4 w-32 h-32 rounded-full border-2 border-white/10" />
-                <div className="absolute inset-0 opacity-[0.07]" style={{
-                    backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)',
-                    backgroundSize: '32px 32px'
+            <section className="relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+                {/* Mesh gradient overlay */}
+                <div className="absolute inset-0 opacity-30" style={{
+                    background: 'radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.5), transparent), radial-gradient(ellipse 60% 40% at 80% 50%, rgba(16,185,129,0.3), transparent)'
+                }} />
+                {/* Grid pattern */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M60 0H0v60' fill='none' stroke='white' stroke-width='1'/%3E%3C/svg%3E")`,
+                    backgroundSize: '60px 60px'
                 }} />
 
-                <div className="relative max-w-6xl mx-auto px-4 md:px-6 py-20 md:py-28 lg:py-36">
-                    <div className="max-w-2xl">
-                        {org.logo_url && (
-                            <Image src={org.logo_url} alt={org.name} width={64} height={64} className="w-16 h-16 rounded-2xl object-cover shadow-xl mb-6 border-2 border-white/20" />
-                        )}
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight tracking-tight">
-                            {org.name}
-                        </h1>
-                        {pd.tagline && (
-                            <p className="text-lg md:text-xl text-blue-100 mt-3 leading-relaxed">{pd.tagline}</p>
-                        )}
-                        <div className="flex flex-col sm:flex-row gap-3 mt-8">
-                            <Link
-                                href={`/book-online/${slug}`}
-                                className="inline-flex items-center justify-center gap-2 h-12 px-8 rounded-xl bg-white text-[#0077B6] font-bold text-base shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all"
-                            >
-                                <Calendar size={18} /> Book Appointment
-                            </Link>
-                            {org.phone && (
-                                <a
-                                    href={`tel:${org.phone}`}
-                                    className="inline-flex items-center justify-center gap-2 h-12 px-8 rounded-xl border-2 border-white/30 text-white font-semibold text-base hover:bg-white/10 transition-all"
-                                >
-                                    <Phone size={18} /> Call Us
-                                </a>
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 md:pt-24 md:pb-28 lg:pt-32 lg:pb-36">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-12 lg:gap-16">
+                        {/* Left: Text */}
+                        <div className="max-w-xl lg:max-w-2xl">
+                            {org.logo_url && (
+                                <div className="mb-6 inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/10">
+                                    <Image src={org.logo_url} alt={org.name} width={28} height={28} className="w-7 h-7 rounded-lg object-cover" />
+                                    <span className="text-sm font-medium text-white/80">Welcome to {org.name}</span>
+                                </div>
                             )}
+                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-[1.1] tracking-tight">
+                                Your Health,{' '}
+                                <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">
+                                    Our Priority
+                                </span>
+                            </h1>
+                            {pd.tagline && (
+                                <p className="text-lg md:text-xl text-slate-300 mt-5 leading-relaxed max-w-lg">{pd.tagline}</p>
+                            )}
+                            <div className="flex flex-col sm:flex-row gap-3 mt-8">
+                                <Link
+                                    href={`/book-online/${slug}`}
+                                    className="inline-flex items-center justify-center gap-2 h-13 px-8 rounded-full bg-white text-slate-900 font-bold text-base hover:bg-slate-100 transition-all shadow-lg shadow-white/10"
+                                >
+                                    <Calendar size={18} /> Book Appointment
+                                </Link>
+                                {org.phone && (
+                                    <a
+                                        href={`tel:${org.phone}`}
+                                        className="inline-flex items-center justify-center gap-2 h-13 px-8 rounded-full border border-white/20 text-white font-semibold text-base hover:bg-white/10 backdrop-blur-sm transition-all"
+                                    >
+                                        <Phone size={18} /> Call Us
+                                    </a>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Right: Stats cards */}
+                        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:w-[360px] flex-shrink-0">
+                            <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5">
+                                <div className="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center mb-3">
+                                    <Stethoscope size={20} className="text-blue-400" />
+                                </div>
+                                <p className="text-2xl font-bold text-white">{doctors.length}</p>
+                                <p className="text-sm text-slate-400 mt-0.5">Doctor{doctors.length !== 1 ? 's' : ''}</p>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5">
+                                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center mb-3">
+                                    <CheckCircle size={20} className="text-emerald-400" />
+                                </div>
+                                <p className="text-2xl font-bold text-white">{serviceCount || '10'}+</p>
+                                <p className="text-sm text-slate-400 mt-0.5">Services</p>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5">
+                                <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center mb-3">
+                                    <Star size={20} className="text-amber-400" />
+                                </div>
+                                <p className="text-2xl font-bold text-white">4.9</p>
+                                <p className="text-sm text-slate-400 mt-0.5">Rating</p>
+                            </div>
+                            <div className="bg-white/10 backdrop-blur-md border border-white/10 rounded-2xl p-5">
+                                <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center mb-3">
+                                    <Shield size={20} className="text-purple-400" />
+                                </div>
+                                <p className="text-2xl font-bold text-white">24/7</p>
+                                <p className="text-sm text-slate-400 mt-0.5">Support</p>
+                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
+            {/* ───── Quick Info Bar ───── */}
+            {contactItems.length > 0 && (
+                <div className="bg-white border-b border-slate-200/60">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                        <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm">
+                            {org.address && (
+                                <div className="flex items-center gap-2 text-slate-600">
+                                    <MapPin size={15} className="text-slate-400 flex-shrink-0" />
+                                    <span>{org.address}</span>
+                                </div>
+                            )}
+                            {org.phone && (
+                                <a href={`tel:${org.phone}`} className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors">
+                                    <Phone size={15} className="text-slate-400 flex-shrink-0" />
+                                    <span>{org.phone}</span>
+                                </a>
+                            )}
+                            {org.email && (
+                                <a href={`mailto:${org.email}`} className="flex items-center gap-2 text-slate-600 hover:text-blue-600 transition-colors">
+                                    <Mail size={15} className="text-slate-400 flex-shrink-0" />
+                                    <span>{org.email}</span>
+                                </a>
+                            )}
+                            {pd.working_hours && (
+                                <div className="flex items-center gap-2 text-slate-600">
+                                    <Clock size={15} className="text-slate-400 flex-shrink-0" />
+                                    <span>{pd.working_hours.split('\n')[0]}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* ───── About ───── */}
             {hasDescription && (
-                <section className="py-16 md:py-20 bg-slate-50">
-                    <div className="max-w-6xl mx-auto px-4 md:px-6">
-                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-10">About Our Clinic</h2>
+                <section className="py-16 md:py-24">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-12">
+                            <p className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-2">About Us</p>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">About Our Clinic</h2>
+                        </div>
 
                         {hasAboutImage ? (
-                            <div className={`flex flex-col md:flex-row gap-10 items-center ${pd.about_image_position === 'right' ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
+                            <div className={`flex flex-col md:flex-row gap-10 lg:gap-16 items-center ${pd.about_image_position === 'right' ? 'md:flex-row' : 'md:flex-row-reverse'}`}>
                                 <div className="flex-1 min-w-0">
                                     <div
-                                        className="clinic-content prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-600 prose-strong:text-slate-800 prose-ul:text-slate-600 prose-ol:text-slate-600"
+                                        className="clinic-content prose prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-800 prose-ul:text-slate-600 prose-ol:text-slate-600"
                                         dangerouslySetInnerHTML={{ __html: sanitizeHtml(pd.description_html!) }}
                                     />
                                 </div>
                                 <div className="w-full md:w-[45%] flex-shrink-0">
-                                    <Image
-                                        src={pd.about_image_url!}
-                                        alt={`About ${org.name}`}
-                                        width={600}
-                                        height={400}
-                                        className="w-full rounded-2xl shadow-lg object-cover max-h-[400px]"
-                                        sizes="(max-width: 768px) 100vw, 45vw"
-                                    />
+                                    <div className="relative">
+                                        <div className="absolute -inset-4 bg-gradient-to-br from-blue-100 to-emerald-100 rounded-3xl opacity-50 blur-sm" />
+                                        <Image
+                                            src={pd.about_image_url!}
+                                            alt={`About ${org.name}`}
+                                            width={600}
+                                            height={400}
+                                            className="relative w-full rounded-2xl shadow-xl object-cover max-h-[420px]"
+                                            sizes="(max-width: 768px) 100vw, 45vw"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="max-w-3xl mx-auto">
+                            <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-slate-200/60 p-8 md:p-12 shadow-sm">
                                 <div
-                                    className="clinic-content prose prose-lg prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-600 prose-strong:text-slate-800 text-center"
+                                    className="clinic-content prose prose-lg prose-slate max-w-none prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-800 text-center"
                                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(pd.description_html!) }}
                                 />
                             </div>
@@ -209,32 +295,33 @@ export default async function ClinicLandingPage({ params }: { params: Promise<{ 
 
             {/* ───── Services ───── */}
             {pd.services && pd.services.length > 0 && (
-                <section className="py-16 md:py-20">
-                    <div className="max-w-6xl mx-auto px-4 md:px-6">
-                        <div className="text-center mb-10">
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Our Services</h2>
-                            <p className="text-slate-500 mt-2">Comprehensive healthcare tailored to your needs</p>
+                <section className="py-16 md:py-24 bg-white">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-12">
+                            <p className="text-sm font-semibold text-emerald-600 uppercase tracking-wider mb-2">What We Offer</p>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Our Services</h2>
+                            <p className="text-slate-500 mt-3 max-w-lg mx-auto">Comprehensive healthcare tailored to your needs</p>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                             {pd.services.map((service, i) => {
-                                const colors = [
-                                    { bg: 'bg-blue-50', text: 'text-[#0077B6]', border: 'hover:border-blue-100' },
-                                    { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'hover:border-emerald-100' },
-                                    { bg: 'bg-violet-50', text: 'text-violet-600', border: 'hover:border-violet-100' },
-                                    { bg: 'bg-amber-50', text: 'text-amber-600', border: 'hover:border-amber-100' },
-                                    { bg: 'bg-rose-50', text: 'text-rose-600', border: 'hover:border-rose-100' },
-                                    { bg: 'bg-cyan-50', text: 'text-cyan-600', border: 'hover:border-cyan-100' },
+                                const gradients = [
+                                    'from-blue-500 to-cyan-500',
+                                    'from-emerald-500 to-teal-500',
+                                    'from-violet-500 to-purple-500',
+                                    'from-amber-500 to-orange-500',
+                                    'from-rose-500 to-pink-500',
+                                    'from-sky-500 to-indigo-500',
                                 ]
-                                const c = colors[i % colors.length]
+                                const g = gradients[i % gradients.length]
                                 return (
                                     <div
                                         key={i}
-                                        className={`flex items-center gap-3 p-4 rounded-xl bg-white border border-slate-100 shadow-sm hover:shadow-md ${c.border} transition-all`}
+                                        className="group flex items-center gap-4 p-5 rounded-2xl bg-[#fafbfc] border border-slate-200/60 hover:bg-white hover:shadow-lg hover:shadow-slate-200/50 hover:border-slate-200 transition-all duration-300"
                                     >
-                                        <div className={`w-9 h-9 rounded-lg ${c.bg} flex items-center justify-center flex-shrink-0`}>
-                                            <CheckCircle size={18} className={c.text} />
+                                        <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${g} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                                            <CheckCircle size={18} className="text-white" />
                                         </div>
-                                        <span className="font-medium text-slate-800">{service}</span>
+                                        <span className="font-semibold text-slate-800 group-hover:text-slate-900 transition-colors">{service}</span>
                                     </div>
                                 )
                             })}
@@ -245,22 +332,25 @@ export default async function ClinicLandingPage({ params }: { params: Promise<{ 
 
             {/* ───── Gallery ───── */}
             {pd.gallery_images && pd.gallery_images.length > 0 && (
-                <section className="py-16 md:py-20 bg-slate-50">
-                    <div className="max-w-6xl mx-auto px-4 md:px-6">
-                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-10">Our Clinic</h2>
+                <section className="py-16 md:py-24">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-12">
+                            <p className="text-sm font-semibold text-purple-600 uppercase tracking-wider mb-2">Gallery</p>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Our Clinic</h2>
+                        </div>
                         <div className={`grid gap-4 ${
                             pd.gallery_images.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto'
                             : pd.gallery_images.length === 2 ? 'grid-cols-1 sm:grid-cols-2'
                             : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
                         }`}>
                             {pd.gallery_images.map((url, i) => (
-                                <div key={i} className="rounded-2xl overflow-hidden shadow-md border border-slate-100">
+                                <div key={i} className="group rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/60">
                                     <Image
                                         src={url}
                                         alt={`${org.name} gallery ${i + 1}`}
                                         width={400}
-                                        height={256}
-                                        className="w-full h-64 object-cover hover:scale-105 transition-transform duration-500"
+                                        height={280}
+                                        className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                                     />
                                 </div>
@@ -272,28 +362,41 @@ export default async function ClinicLandingPage({ params }: { params: Promise<{ 
 
             {/* ───── Doctors ───── */}
             {doctors.length > 0 && (
-                <section className={`py-16 md:py-20 ${pd.gallery_images?.length ? '' : 'bg-slate-50'}`}>
-                    <div className="max-w-6xl mx-auto px-4 md:px-6">
-                        <div className="text-center mb-10">
-                            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">Meet Our Team</h2>
-                            <p className="text-slate-500 mt-2">Experienced professionals dedicated to your health</p>
+                <section className="py-16 md:py-24 bg-white">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-12">
+                            <p className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-2">Our Team</p>
+                            <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Meet Our Doctors</h2>
+                            <p className="text-slate-500 mt-3 max-w-lg mx-auto">Experienced professionals dedicated to your health</p>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className={`grid gap-6 ${
+                            doctors.length === 1 ? 'grid-cols-1 max-w-sm mx-auto'
+                            : doctors.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl mx-auto'
+                            : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                        }`}>
                             {doctors.map((doc: any) => {
                                 const name = doc.profiles?.full_name || 'Doctor'
                                 const initials = name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
                                 return (
-                                    <div key={doc.id} className="bg-white rounded-2xl border border-slate-100 p-6 text-center shadow-sm hover:shadow-lg transition-shadow">
-                                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#0077B6] to-[#0096c7] flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/20">
+                                    <div key={doc.id} className="group relative bg-[#fafbfc] rounded-2xl border border-slate-200/60 p-8 text-center hover:bg-white hover:shadow-xl hover:shadow-slate-200/50 hover:border-slate-200 transition-all duration-300 overflow-hidden">
+                                        {/* Subtle gradient top border */}
+                                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 via-cyan-500 to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 flex items-center justify-center mx-auto mb-5 shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
                                             <span className="text-white font-bold text-xl">{initials}</span>
                                         </div>
-                                        <h3 className="font-bold text-lg text-slate-900">{name}</h3>
+                                        <h3 className="font-bold text-lg text-slate-900">Dr. {name}</h3>
                                         {doc.specialization && (
-                                            <p className="text-sm text-[#0077B6] font-medium mt-1">{doc.specialization}</p>
+                                            <p className="text-sm text-blue-600 font-medium mt-1.5">{doc.specialization}</p>
                                         )}
                                         {doc.registration_number && (
-                                            <p className="text-xs text-slate-400 mt-1">Reg: {doc.registration_number}</p>
+                                            <p className="text-xs text-slate-400 mt-1.5">Reg: {doc.registration_number}</p>
                                         )}
+                                        <Link
+                                            href={`/book-online/${slug}`}
+                                            className="inline-flex items-center gap-1.5 mt-5 text-sm font-semibold text-slate-500 hover:text-blue-600 transition-colors"
+                                        >
+                                            Book Appointment <ArrowRight size={14} />
+                                        </Link>
                                     </div>
                                 )
                             })}
@@ -302,83 +405,132 @@ export default async function ClinicLandingPage({ params }: { params: Promise<{ 
                 </section>
             )}
 
-            {/* ───── Working Hours ───── */}
-            {pd.working_hours && (
-                <section className="py-16 md:py-20">
-                    <div className="max-w-md mx-auto px-4 md:px-6">
-                        <div className="bg-white rounded-2xl border border-slate-100 p-8 shadow-sm text-center">
-                            <div className="w-14 h-14 rounded-xl bg-amber-50 flex items-center justify-center mx-auto mb-4">
-                                <Clock size={24} className="text-amber-600" />
-                            </div>
-                            <h2 className="text-xl font-bold text-slate-900 mb-2">Working Hours</h2>
-                            <p className="text-slate-600 whitespace-pre-line">{pd.working_hours}</p>
-                        </div>
-                    </div>
-                </section>
-            )}
+            {/* ───── Working Hours + Contact Combined ───── */}
+            {(pd.working_hours || contactItems.length > 0) && (
+                <section className="py-16 md:py-24">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="bg-white rounded-3xl border border-slate-200/60 shadow-sm overflow-hidden">
+                            <div className="grid grid-cols-1 lg:grid-cols-2">
+                                {/* Working Hours */}
+                                {pd.working_hours && (
+                                    <div className="p-8 md:p-12 lg:border-r border-slate-200/60">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                                                <Clock size={20} className="text-amber-600" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-slate-900">Working Hours</h3>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {pd.working_hours.split('\n').filter(Boolean).map((line, i) => (
+                                                <div key={i} className="flex items-center justify-between py-2.5 border-b border-dashed border-slate-100 last:border-0">
+                                                    <span className="text-slate-700">{line}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
 
-            {/* ───── Contact ───── */}
-            {(org.address || org.phone || org.email) && (
-                <section className="py-16 md:py-20 bg-slate-50">
-                    <div className="max-w-6xl mx-auto px-4 md:px-6">
-                        <h2 className="text-2xl md:text-3xl font-bold text-slate-900 text-center mb-10">Contact Us</h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
-                            {org.address && (
-                                <div className="bg-white rounded-2xl border border-slate-100 p-6 text-center shadow-sm">
-                                    <div className="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mx-auto mb-3">
-                                        <MapPin size={20} className="text-emerald-600" />
+                                {/* Contact Info */}
+                                {contactItems.length > 0 && (
+                                    <div className="p-8 md:p-12 bg-slate-50/50">
+                                        <div className="flex items-center gap-3 mb-6">
+                                            <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+                                                <Phone size={20} className="text-blue-600" />
+                                            </div>
+                                            <h3 className="text-xl font-bold text-slate-900">Get in Touch</h3>
+                                        </div>
+                                        <div className="space-y-5">
+                                            {org.address && (
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                        <MapPin size={18} className="text-emerald-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Address</p>
+                                                        <p className="text-slate-700">{org.address}</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {org.phone && (
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                        <Phone size={18} className="text-blue-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Phone</p>
+                                                        <a href={`tel:${org.phone}`} className="text-slate-700 hover:text-blue-600 transition-colors font-medium">{org.phone}</a>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {org.email && (
+                                                <div className="flex items-start gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                                        <Mail size={18} className="text-purple-600" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Email</p>
+                                                        <a href={`mailto:${org.email}`} className="text-slate-700 hover:text-blue-600 transition-colors font-medium">{org.email}</a>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <p className="text-sm font-semibold text-slate-800 mb-1">Address</p>
-                                    <p className="text-sm text-slate-500">{org.address}</p>
-                                </div>
-                            )}
-                            {org.phone && (
-                                <div className="bg-white rounded-2xl border border-slate-100 p-6 text-center shadow-sm">
-                                    <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mx-auto mb-3">
-                                        <Phone size={20} className="text-blue-600" />
-                                    </div>
-                                    <p className="text-sm font-semibold text-slate-800 mb-1">Phone</p>
-                                    <a href={`tel:${org.phone}`} className="text-sm text-[#0077B6] hover:underline">{org.phone}</a>
-                                </div>
-                            )}
-                            {org.email && (
-                                <div className="bg-white rounded-2xl border border-slate-100 p-6 text-center shadow-sm">
-                                    <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mx-auto mb-3">
-                                        <Mail size={20} className="text-purple-600" />
-                                    </div>
-                                    <p className="text-sm font-semibold text-slate-800 mb-1">Email</p>
-                                    <a href={`mailto:${org.email}`} className="text-sm text-[#0077B6] hover:underline">{org.email}</a>
-                                </div>
-                            )}
+                                )}
+                            </div>
                         </div>
                     </div>
                 </section>
             )}
 
             {/* ───── Final CTA ───── */}
-            <section className="relative overflow-hidden py-16 md:py-20 bg-gradient-to-br from-[#0077B6] via-[#023e8a] to-[#0096c7]">
-                {/* Decorative elements */}
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/3" />
-                <div className="absolute top-1/2 left-1/4 w-2 h-2 bg-white/20 rounded-full" />
-                <div className="absolute bottom-1/3 right-1/4 w-3 h-3 bg-white/15 rounded-full" />
+            <section className="relative overflow-hidden">
+                <div className="absolute inset-0 bg-slate-900" />
+                <div className="absolute inset-0 opacity-30" style={{
+                    background: 'radial-gradient(ellipse 80% 50% at 50% 120%, rgba(59,130,246,0.5), transparent), radial-gradient(ellipse 60% 40% at 20% 50%, rgba(16,185,129,0.3), transparent)'
+                }} />
 
-                <div className="relative max-w-2xl mx-auto px-4 md:px-6 text-center text-white">
-                    <h2 className="text-2xl md:text-3xl font-bold">Ready to Book Your Appointment?</h2>
-                    <p className="text-blue-100 mt-3">Schedule your visit online in just a few clicks.</p>
-                    <Link
-                        href={`/book-online/${slug}`}
-                        className="inline-flex items-center justify-center gap-2 h-12 px-8 mt-8 rounded-xl bg-white text-[#0077B6] font-bold text-base shadow-xl hover:shadow-2xl hover:scale-[1.02] transition-all"
-                    >
-                        Book Now <ArrowRight size={18} />
-                    </Link>
+                <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28 text-center">
+                    <h2 className="text-3xl md:text-4xl font-bold text-white">Ready to Book Your Visit?</h2>
+                    <p className="text-slate-400 mt-4 text-lg max-w-md mx-auto">Schedule your appointment online in just a few clicks. No waiting, no hassle.</p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
+                        <Link
+                            href={`/book-online/${slug}`}
+                            className="inline-flex items-center justify-center gap-2 h-13 px-8 rounded-full bg-white text-slate-900 font-bold text-base hover:bg-slate-100 transition-all shadow-lg"
+                        >
+                            Book Appointment <ArrowRight size={18} />
+                        </Link>
+                        {org.phone && (
+                            <a
+                                href={`tel:${org.phone}`}
+                                className="inline-flex items-center justify-center gap-2 h-13 px-8 rounded-full border border-white/20 text-white font-semibold text-base hover:bg-white/10 transition-all"
+                            >
+                                <Phone size={18} /> {org.phone}
+                            </a>
+                        )}
+                    </div>
                 </div>
             </section>
 
             {/* ───── Footer ───── */}
-            <footer className="py-8 bg-slate-900 text-slate-400">
-                <div className="max-w-6xl mx-auto px-4 md:px-6 text-center text-sm">
-                    <p>&copy; {new Date().getFullYear()} {org.name}. All rights reserved.</p>
+            <footer className="bg-slate-950 text-slate-500">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                            {org.logo_url ? (
+                                <Image src={org.logo_url} alt={org.name} width={28} height={28} className="w-7 h-7 rounded-lg object-cover opacity-70" />
+                            ) : (
+                                <div className="w-7 h-7 rounded-lg bg-white/10 flex items-center justify-center">
+                                    <Building2 size={14} className="text-white/50" />
+                                </div>
+                            )}
+                            <span className="text-sm font-medium text-slate-400">{org.name}</span>
+                        </div>
+                        <p className="text-sm">&copy; {new Date().getFullYear()} {org.name}. All rights reserved.</p>
+                        <div className="flex items-center gap-4 text-sm">
+                            <Link href={`/book-online/${slug}`} className="hover:text-white transition-colors">Book Online</Link>
+                            <Link href={`/clinic/${slug}/login`} className="hover:text-white transition-colors">Staff Portal</Link>
+                        </div>
+                    </div>
                 </div>
             </footer>
         </div>

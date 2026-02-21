@@ -1,13 +1,25 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/admin'
-import { requireClinicOwner } from '@/utils/auth'
+import { requireDoctorWithClinic } from '@/utils/auth'
 import { revalidatePath } from 'next/cache'
 
 const PROTECTED_EMAIL = 'sadik5780@gmail.com'
 
+// Helper: verify the target profile is an assistant assigned to this doctor
+async function verifyIsMyAssistant(doctorId: string, targetProfileId: string) {
+    const admin = createAdminClient()
+    const { data } = await admin
+        .from('assistants')
+        .select('id')
+        .eq('profile_id', targetProfileId)
+        .eq('assigned_doctor_id', doctorId)
+        .single()
+    return !!data
+}
+
 export async function resetStaffPassword(formData: FormData) {
-    const owner = await requireClinicOwner()
+    const doctor = await requireDoctorWithClinic()
     const admin = createAdminClient()
 
     const userId = formData.get('user_id') as string
@@ -15,7 +27,7 @@ export async function resetStaffPassword(formData: FormData) {
 
     if (!userId || !newPassword) return { error: 'Missing required fields' }
     if (newPassword.length < 8) return { error: 'Password must be at least 8 characters' }
-    if (userId === owner.id) return { error: 'You cannot reset your own password from here' }
+    if (userId === doctor.id) return { error: 'You cannot reset your own password from here' }
 
     // Verify target belongs to same clinic
     const { data: target } = await admin
@@ -24,11 +36,17 @@ export async function resetStaffPassword(formData: FormData) {
         .eq('id', userId)
         .single()
 
-    if (!target || target.clinic_id !== owner.clinic_id) {
+    if (!target || target.clinic_id !== doctor.clinic_id) {
         return { error: 'User does not belong to your clinic' }
     }
 
     if (target.email === PROTECTED_EMAIL) return { error: 'System admin account cannot be modified' }
+
+    // Non-owners can only manage their own assistants
+    if (!doctor.is_clinic_owner) {
+        const isMyAssistant = await verifyIsMyAssistant(doctor.doctor_id, userId)
+        if (!isMyAssistant) return { error: 'You can only manage your own assistants' }
+    }
 
     try {
         const { error } = await admin.auth.admin.updateUserById(userId, {
@@ -43,14 +61,14 @@ export async function resetStaffPassword(formData: FormData) {
 }
 
 export async function toggleStaffStatus(formData: FormData) {
-    const owner = await requireClinicOwner()
+    const doctor = await requireDoctorWithClinic()
     const admin = createAdminClient()
 
     const userId = formData.get('user_id') as string
     const isActive = formData.get('is_active') === 'true'
 
     if (!userId) return { error: 'Missing user ID' }
-    if (userId === owner.id) return { error: 'You cannot disable your own account' }
+    if (userId === doctor.id) return { error: 'You cannot disable your own account' }
 
     // Verify target belongs to same clinic
     const { data: target } = await admin
@@ -59,8 +77,14 @@ export async function toggleStaffStatus(formData: FormData) {
         .eq('id', userId)
         .single()
 
-    if (!target || target.clinic_id !== owner.clinic_id) {
+    if (!target || target.clinic_id !== doctor.clinic_id) {
         return { error: 'User does not belong to your clinic' }
+    }
+
+    // Non-owners can only manage their own assistants
+    if (!doctor.is_clinic_owner) {
+        const isMyAssistant = await verifyIsMyAssistant(doctor.doctor_id, userId)
+        if (!isMyAssistant) return { error: 'You can only manage your own assistants' }
     }
 
     // Protect system admin
@@ -81,13 +105,15 @@ export async function toggleStaffStatus(formData: FormData) {
 }
 
 export async function removeStaffFromClinic(formData: FormData) {
-    const owner = await requireClinicOwner()
-    const admin = createAdminClient()
+    // Only clinic owners can remove staff from clinic
+    const doctor = await requireDoctorWithClinic()
+    if (!doctor.is_clinic_owner) return { error: 'Only clinic owners can remove staff from the clinic' }
 
+    const admin = createAdminClient()
     const profileId = formData.get('profile_id') as string
 
     if (!profileId) return { error: 'Missing profile ID' }
-    if (profileId === owner.id) return { error: 'You cannot remove yourself from the clinic' }
+    if (profileId === doctor.id) return { error: 'You cannot remove yourself from the clinic' }
 
     // Verify target belongs to same clinic
     const { data: target } = await admin
@@ -96,7 +122,7 @@ export async function removeStaffFromClinic(formData: FormData) {
         .eq('id', profileId)
         .single()
 
-    if (!target || target.clinic_id !== owner.clinic_id) {
+    if (!target || target.clinic_id !== doctor.clinic_id) {
         return { error: 'User does not belong to your clinic' }
     }
 
@@ -116,13 +142,13 @@ export async function removeStaffFromClinic(formData: FormData) {
 }
 
 export async function deleteStaffMember(formData: FormData) {
-    const owner = await requireClinicOwner()
+    const doctor = await requireDoctorWithClinic()
     const admin = createAdminClient()
 
     const profileId = formData.get('profile_id') as string
 
     if (!profileId) return { error: 'Missing profile ID' }
-    if (profileId === owner.id) return { error: 'You cannot delete your own account' }
+    if (profileId === doctor.id) return { error: 'You cannot delete your own account' }
 
     // Verify target belongs to same clinic
     const { data: target } = await admin
@@ -131,8 +157,14 @@ export async function deleteStaffMember(formData: FormData) {
         .eq('id', profileId)
         .single()
 
-    if (!target || target.clinic_id !== owner.clinic_id) {
+    if (!target || target.clinic_id !== doctor.clinic_id) {
         return { error: 'User does not belong to your clinic' }
+    }
+
+    // Non-owners can only delete their own assistants
+    if (!doctor.is_clinic_owner) {
+        const isMyAssistant = await verifyIsMyAssistant(doctor.doctor_id, profileId)
+        if (!isMyAssistant) return { error: 'You can only manage your own assistants' }
     }
 
     // Protect system admin

@@ -12,63 +12,53 @@ export default async function PatientsPage() {
 
     if (!doctorId) return <div>Doctor profile not found.</div>
 
-    // Fetch patient IDs from appointments and prescriptions in parallel
-    const [{ data: appts }, { data: rx }] = await Promise.all([
-        admin.from('appointments').select('patient_id').eq('doctor_id', doctorId).eq('clinic_id', clinicId),
-        admin.from('prescriptions').select('patient_id').eq('doctor_id', doctorId).eq('clinic_id', clinicId),
+    // Fetch all clinic patients + visit stats in parallel
+    const [{ data: allPatients }, { data: appts }, { data: rx }, { data: apptTypes }] = await Promise.all([
+        admin
+            .from('patients')
+            .select('id, full_name, dob, gender, phone, address, registration_number, created_at')
+            .eq('clinic_id', clinicId)
+            .order('created_at', { ascending: false }),
+        admin
+            .from('appointments')
+            .select('patient_id')
+            .eq('doctor_id', doctorId)
+            .eq('clinic_id', clinicId),
+        admin
+            .from('prescriptions')
+            .select('patient_id, created_at')
+            .eq('doctor_id', doctorId)
+            .eq('clinic_id', clinicId)
+            .order('created_at', { ascending: false }),
+        admin
+            .from('appointments')
+            .select('patient_id, appointment_type')
+            .eq('doctor_id', doctorId)
+            .eq('clinic_id', clinicId),
     ])
 
-    const patientIds = Array.from(new Set([
-        ...(appts?.map(a => a.patient_id) || []),
-        ...(rx?.map(r => r.patient_id) || [])
-    ]))
+    // Build stats map
+    const statsMap: Record<string, { visitCount: number; lastVisitDate: string | null; appointmentTypes: string[] }> = {}
+    const visitData = rx || []
+    const apptData = apptTypes || []
 
-    let patients: any[] = []
-
-    if (patientIds.length > 0) {
-        // Fetch patients, visit stats, and appointment types in parallel
-        const [{ data: myPatients }, { data: visitData }, { data: apptTypes }] = await Promise.all([
-            admin
-                .from('patients')
-                .select('id, full_name, dob, gender, phone, address, registration_number, created_at')
-                .in('id', patientIds)
-                .eq('clinic_id', clinicId)
-                .order('created_at', { ascending: false }),
-            admin
-                .from('prescriptions')
-                .select('patient_id, created_at')
-                .eq('doctor_id', doctorId)
-                .eq('clinic_id', clinicId)
-                .in('patient_id', patientIds)
-                .order('created_at', { ascending: false }),
-            admin
-                .from('appointments')
-                .select('patient_id, appointment_type')
-                .eq('doctor_id', doctorId)
-                .eq('clinic_id', clinicId)
-                .in('patient_id', patientIds),
-        ])
-
-        // Build stats map
-        const statsMap: Record<string, { visitCount: number; lastVisitDate: string | null; appointmentTypes: string[] }> = {}
-        for (const id of patientIds) {
-            const pVisits = (visitData || []).filter(v => v.patient_id === id)
-            const pAppts = (apptTypes || []).filter(a => a.patient_id === id)
-            const types = Array.from(new Set(pAppts.map(a => a.appointment_type).filter(Boolean)))
-            statsMap[id] = {
-                visitCount: pVisits.length,
-                lastVisitDate: pVisits.length > 0 ? pVisits[0].created_at : null,
-                appointmentTypes: types,
-            }
+    for (const p of allPatients || []) {
+        const pVisits = visitData.filter(v => v.patient_id === p.id)
+        const pAppts = apptData.filter(a => a.patient_id === p.id)
+        const types = Array.from(new Set(pAppts.map(a => a.appointment_type).filter(Boolean)))
+        statsMap[p.id] = {
+            visitCount: pVisits.length,
+            lastVisitDate: pVisits.length > 0 ? pVisits[0].created_at : null,
+            appointmentTypes: types,
         }
-
-        patients = (myPatients || []).map(p => ({
-            ...p,
-            visit_count: statsMap[p.id]?.visitCount || 0,
-            last_visit_date: statsMap[p.id]?.lastVisitDate || null,
-            appointment_types: statsMap[p.id]?.appointmentTypes || [],
-        }))
     }
+
+    const patients = (allPatients || []).map(p => ({
+        ...p,
+        visit_count: statsMap[p.id]?.visitCount || 0,
+        last_visit_date: statsMap[p.id]?.lastVisitDate || null,
+        appointment_types: statsMap[p.id]?.appointmentTypes || [],
+    }))
 
     return (
         <div className="space-y-6 animate-enter">

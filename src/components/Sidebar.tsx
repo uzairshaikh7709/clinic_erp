@@ -1,6 +1,6 @@
 'use client'
 
-import { LayoutDashboard, Calendar, Users, FileText, Activity, Clock, Building2, UserCog, Mail, Globe } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, FileText, Activity, Clock, Building2, UserCog, Mail, Globe, Award } from 'lucide-react'
 import { SignOutButton } from '@/components/SignOutButton'
 import { NavItem } from '@/components/NavItem'
 
@@ -36,15 +36,12 @@ export function Sidebar({ role, profile }: SidebarProps) {
                         <NavItem href="/doctor/patients" icon={Users} label="My Patients" />
                         <NavItem href="/doctor/templates" icon={FileText} label="Templates" />
                         <NavItem href="/doctor/schedule" icon={Clock} label="Schedule" />
-                        {profile?.is_clinic_owner && (
-                            <>
-                                <div className="pt-3 pb-1">
-                                    <p className="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Management</p>
-                                </div>
-                                <NavItem href="/doctor/team" icon={UserCog} label="Team" />
-                                <NavItem href="/doctor/clinic" icon={Globe} label="Clinic Page" />
-                            </>
-                        )}
+                        <NavItem href="/doctor/certifications" icon={Award} label="Certifications" />
+                        <div className="pt-3 pb-1">
+                            <p className="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Management</p>
+                        </div>
+                        <NavItem href="/doctor/team" icon={UserCog} label={profile?.is_clinic_owner ? 'Team' : 'My Staff'} />
+                        <NavItem href="/doctor/clinic" icon={Globe} label="Clinic" />
                     </>
                 )}
 
