@@ -46,6 +46,7 @@ create table if not exists public.patients (
   full_name text not null,
   dob date,
   gender text,
+  phone text,
   address text,
   registration_number text unique, -- generated
   created_by_doctor_id uuid references public.doctors(id), -- optional tracking

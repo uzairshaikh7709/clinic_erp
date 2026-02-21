@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation'
 import { createBrowserClient } from '@/utils/supabase/client'
 import { Clock, Loader2, Calendar } from 'lucide-react'
 
-export default function SlotPicker({ doctorId, userFullName }: { doctorId: string, userFullName: string }) {
+export default function SlotPicker({ doctorId, userFullName, clinicId, profileId }: { doctorId: string, userFullName: string, clinicId: string, profileId: string }) {
     const router = useRouter()
     const supabase = createBrowserClient()
     const [booking, setBooking] = useState(false)
     const [date, setDate] = useState(new Date().toISOString().split('T')[0])
     const [availableSlots, setAvailableSlots] = useState<string[]>([])
+    const [slotDuration, setSlotDuration] = useState(15)
     const [loading, setLoading] = useState(false)
 
     useEffect(() => {
@@ -25,7 +26,6 @@ export default function SlotPicker({ doctorId, userFullName }: { doctorId: strin
             const selectedDate = new Date(date)
             const dayOfWeek = selectedDate.getDay()
 
-            // Fetch doctor's availability for this day
             const { data: slots } = await supabase
                 .from('doctor_slots')
                 .select('*')
@@ -40,7 +40,8 @@ export default function SlotPicker({ doctorId, userFullName }: { doctorId: strin
                 return
             }
 
-            // Generate time slots
+            setSlotDuration(slots.slot_duration || 15)
+
             const generatedSlots: string[] = []
             const [startH, startM] = slots.start_time.split(':').map(Number)
             const [endH, endM] = slots.end_time.split(':').map(Number)
@@ -56,7 +57,6 @@ export default function SlotPicker({ doctorId, userFullName }: { doctorId: strin
                 currentTime += slots.slot_duration
             }
 
-            // Fetch booked appointments for this date
             const startOfDay = `${date}T00:00:00`
             const endOfDay = `${date}T23:59:59`
 
@@ -75,7 +75,6 @@ export default function SlotPicker({ doctorId, userFullName }: { doctorId: strin
                 })
             )
 
-            // Filter out booked slots
             const freeSlots = generatedSlots.filter(slot => !bookedTimes.has(slot))
             setAvailableSlots(freeSlots)
 
@@ -87,21 +86,36 @@ export default function SlotPicker({ doctorId, userFullName }: { doctorId: strin
         }
     }
 
-    const handleBook = async (time: string) => {
-        if (!confirm(`Confirm booking for ${date} at ${time}?`)) return
+    const [error, setError] = useState<string | null>(null)
 
+    const handleBook = async (time: string) => {
         setBooking(true)
+        setError(null)
         try {
             const user = (await supabase.auth.getUser()).data.user
             if (!user) throw new Error("Not logged in")
 
-            let patientId: string = ''
-
-            const { data: existingPatient } = await supabase
+            // Look up patient by profile_id (direct link), fallback to full_name
+            let { data: existingPatient } = await supabase
                 .from('patients')
                 .select('id')
-                .eq('full_name', userFullName)
+                .eq('profile_id', profileId)
+                .eq('clinic_id', clinicId)
                 .single()
+
+            if (!existingPatient) {
+                // Fallback: check by name for legacy records
+                const { data: legacyPatient } = await supabase
+                    .from('patients')
+                    .select('id')
+                    .eq('full_name', userFullName)
+                    .eq('clinic_id', clinicId)
+                    .limit(1)
+                    .single()
+                existingPatient = legacyPatient
+            }
+
+            let patientId: string = ''
 
             if (existingPatient) {
                 patientId = existingPatient.id
@@ -111,25 +125,15 @@ export default function SlotPicker({ doctorId, userFullName }: { doctorId: strin
                     dob: '1990-01-01',
                     gender: 'Other',
                     address: 'Online',
-                    registration_number: 'P-' + Math.floor(Math.random() * 10000)
+                    registration_number: 'P-' + Math.floor(Math.random() * 10000),
+                    clinic_id: clinicId,
+                    profile_id: profileId
                 }).select().single()
                 if (pErr) throw pErr
                 patientId = newP.id
             }
 
-            // Fetch slot duration to calculate end time
-            const selectedDate = new Date(date)
-            const dayOfWeek = selectedDate.getDay()
-
-            const { data: slotConfig } = await supabase
-                .from('doctor_slots')
-                .select('slot_duration')
-                .eq('doctor_id', doctorId)
-                .eq('day_of_week', dayOfWeek)
-                .eq('is_active', true)
-                .single()
-
-            const duration = slotConfig?.slot_duration || 15
+            const duration = slotDuration
 
             const startTime = `${date}T${time}:00`
             const [hours, minutes] = time.split(':').map(Number)
@@ -143,16 +147,16 @@ export default function SlotPicker({ doctorId, userFullName }: { doctorId: strin
                 patient_id: patientId,
                 start_time: startTime,
                 end_time: endTime,
-                status: 'booked'
+                status: 'booked',
+                clinic_id: clinicId
             })
 
             if (error) throw error
 
             router.push('/book?success=true')
-            router.refresh()
 
         } catch (err: any) {
-            alert('Booking failed: ' + err.message)
+            setError('Booking failed: ' + err.message)
         } finally {
             setBooking(false)
         }
@@ -196,6 +200,10 @@ export default function SlotPicker({ doctorId, userFullName }: { doctorId: strin
                         </button>
                     ))}
                 </div>
+            )}
+
+            {error && (
+                <p className="text-sm text-red-500 text-center mt-4">{error}</p>
             )}
 
             <p className="text-xs text-slate-400 mt-6 text-center">

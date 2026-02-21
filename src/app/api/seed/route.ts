@@ -1,16 +1,23 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
 
+const DEFAULT_CLINIC_ID = '00000000-0000-0000-0000-000000000001'
+
 export async function GET() {
+    // Block in production — seed endpoint is for development only
+    if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json({ error: 'Not available in production' }, { status: 403 })
+    }
+
     const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
     )
 
     const users = [
-        { email: 'admin@ortho.com', password: 'password123', role: 'superadmin', name: 'System Admin' },
-        { email: 'dr.steve@ortho.com', password: 'password123', role: 'doctor', name: 'Dr. Steve Rogers', specialization: 'Orthopedic Surgeon', reg: 'Ortho-001' },
-        { email: 'nurse.sarah@ortho.com', password: 'password123', role: 'assistant', name: 'Sarah Connor', assigned_email: 'dr.steve@ortho.com' }
+        { email: 'admin@drease.com', password: 'password123', role: 'superadmin', name: 'System Admin' },
+        { email: 'dr.steve@drease.com', password: 'password123', role: 'doctor', name: 'Dr. Steve Rogers', specialization: 'Orthopedic Surgeon', reg: 'DRE-001' },
+        { email: 'nurse.sarah@drease.com', password: 'password123', role: 'assistant', name: 'Sarah Connor', assigned_email: 'dr.steve@drease.com' }
     ]
 
     const results = []
@@ -37,7 +44,8 @@ export async function GET() {
             email: u.email,
             role: u.role,
             full_name: u.name,
-            is_active: true
+            is_active: true,
+            clinic_id: DEFAULT_CLINIC_ID
         })
 
         if (profileError) {
@@ -50,7 +58,8 @@ export async function GET() {
             await supabase.from('doctors').insert({
                 profile_id: auth.user.id,
                 specialization: u.specialization,
-                registration_number: u.reg
+                registration_number: u.reg,
+                clinic_id: DEFAULT_CLINIC_ID
             })
         } else if (u.role === 'assistant') {
             // Find doctor to assign
@@ -60,7 +69,8 @@ export async function GET() {
                 if (drRecord) {
                     await supabase.from('assistants').insert({
                         profile_id: auth.user.id,
-                        assigned_doctor_id: drRecord.id
+                        assigned_doctor_id: drRecord.id,
+                        clinic_id: DEFAULT_CLINIC_ID
                     })
                 }
             }

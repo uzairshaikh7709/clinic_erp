@@ -19,7 +19,7 @@ async function seed() {
     console.log('Starting manual seed...');
 
     const users = [
-        { email: 'admin@ortho.com', password: 'password123', role: 'superadmin', name: 'System Admin' },
+        { email: 'sadik5780@gmail.com', password: 'password123', role: 'superadmin', name: 'System Admin' },
         { email: 'dr.steve@ortho.com', password: 'password123', role: 'doctor', name: 'Dr. Steve Rogers', specialization: 'Orthopedic Surgeon', reg: 'Ortho-001' },
         { email: 'nurse.sarah@ortho.com', password: 'password123', role: 'assistant', name: 'Sarah Connor', assigned_email: 'dr.steve@ortho.com' }
     ];

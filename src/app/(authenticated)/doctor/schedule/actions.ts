@@ -1,36 +1,36 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/admin'
-import { createClient } from '@/utils/supabase/server'
+import { getUserProfile } from '@/utils/auth'
 import { revalidatePath } from 'next/cache'
 
 export async function getDoctorSlots() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Unauthorized')
+    const profile = await getUserProfile()
+    if (!profile) throw new Error('Unauthorized')
+    const doctorId = profile.doctor_id
+    if (!doctorId) throw new Error('Doctor not found')
+    if (!profile.clinic_id) throw new Error('Not assigned to a clinic')
 
     const admin = createAdminClient()
 
-    // Get Doctor ID
-    const { data: doctor } = await admin
-        .from('doctors')
-        .select('id')
-        .eq('profile_id', user.id)
-        .single()
-
-    if (!doctor) throw new Error('Doctor not found')
-
-    // Get Slots
     const { data: slots } = await admin
         .from('doctor_slots')
         .select('*')
-        .eq('doctor_id', doctor.id)
+        .eq('doctor_id', doctorId)
+        .eq('clinic_id', profile.clinic_id)
         .order('day_of_week')
 
-    return { doctorId: doctor.id, slots: slots || [] }
+    return { doctorId, slots: slots || [] }
 }
 
-export async function saveDoctorSlots(doctorId: string, slots: any[]) {
+export async function saveDoctorSlots(_doctorId: string, slots: any[]) {
+    const profile = await getUserProfile()
+    if (!profile) return { error: 'Unauthorized' }
+    if (!profile.doctor_id) return { error: 'Doctor not found' }
+    if (!profile.clinic_id) return { error: 'Not assigned to a clinic' }
+
+    const doctorId = profile.doctor_id
+    const clinicId = profile.clinic_id
     const admin = createAdminClient()
 
     // Delete existing slots for this doctor
@@ -38,10 +38,11 @@ export async function saveDoctorSlots(doctorId: string, slots: any[]) {
         .from('doctor_slots')
         .delete()
         .eq('doctor_id', doctorId)
+        .eq('clinic_id', clinicId)
 
     if (deleteError) {
         console.error('Error deleting old slots:', deleteError)
-        return { error: 'Failed to update schedule' }
+        return { error: 'Failed to update schedule: ' + deleteError.message }
     }
 
     // Insert new slots
@@ -51,7 +52,8 @@ export async function saveDoctorSlots(doctorId: string, slots: any[]) {
         start_time: s.start_time,
         end_time: s.end_time,
         slot_duration: s.slot_duration,
-        is_active: s.is_active
+        is_active: s.is_active,
+        clinic_id: clinicId
     }))
 
     const { error: insertError } = await admin
@@ -60,7 +62,7 @@ export async function saveDoctorSlots(doctorId: string, slots: any[]) {
 
     if (insertError) {
         console.error('Error inserting new slots:', insertError)
-        return { error: insertError.message }
+        return { error: 'Failed to save schedule: ' + insertError.message }
     }
 
     revalidatePath('/doctor/schedule')

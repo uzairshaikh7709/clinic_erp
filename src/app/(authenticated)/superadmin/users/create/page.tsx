@@ -11,5 +11,12 @@ export default async function CreateUserPage() {
         .from('doctors')
         .select('*, profiles(full_name)')
 
-    return <CreateUserForm doctors={doctors || []} />
+    // Fetch organizations for org assignment
+    const { data: organizations } = await supabase
+        .from('organizations')
+        .select('id, name')
+        .eq('is_active', true)
+        .order('name')
+
+    return <CreateUserForm doctors={doctors || []} organizations={organizations || []} />
 }

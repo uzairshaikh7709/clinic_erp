@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { User, Calendar, MapPin, Phone, Save, ArrowLeft } from 'lucide-react'
@@ -10,6 +10,8 @@ export default function NewPatientPage() {
     const router = useRouter()
     const supabase = createBrowserClient()
     const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [clinicId, setClinicId] = useState<string | null>(null)
     const [formData, setFormData] = useState({
         full_name: '',
         dob: '',
@@ -18,12 +20,22 @@ export default function NewPatientPage() {
         address: ''
     })
 
+    useEffect(() => {
+        const fetchClinicId = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (user) {
+                const { data: profile } = await supabase.from('profiles').select('clinic_id').eq('id', user.id).single()
+                setClinicId(profile?.clinic_id ?? null)
+            }
+        }
+        fetchClinicId()
+    }, [])
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
 
         try {
-            // Auto-generate ID
             const registrationNumber = 'P-' + Math.floor(1000 + Math.random() * 9000)
 
             const { data, error } = await supabase.from('patients').insert({
@@ -31,35 +43,34 @@ export default function NewPatientPage() {
                 dob: formData.dob,
                 gender: formData.gender,
                 address: formData.address,
-                // phone: formData.phone, 
-                registration_number: registrationNumber
+                phone: formData.phone || null,
+                registration_number: registrationNumber,
+                clinic_id: clinicId
             }).select().single()
 
             if (error) throw error
 
-            alert('Patient Registered Successfully!')
-            router.push(`/assistant/patients`) // Go back to list
-            router.refresh()
-        } catch (error: any) {
-            alert('Error: ' + error.message)
+            router.push(`/assistant/patients`)
+        } catch (err: any) {
+            setError(err.message)
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center gap-4">
-                <Link href="/assistant/patients" className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors">
+        <div className="max-w-2xl mx-auto space-y-6 animate-enter">
+            <div className="flex items-center gap-3 sm:gap-4">
+                <Link href="/assistant/patients" className="p-2 rounded-full hover:bg-slate-100 text-slate-500 transition-colors flex-shrink-0">
                     <ArrowLeft size={20} />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">Register New Patient</h1>
-                    <p className="text-slate-500 text-sm">Create a new patient record manually</p>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Register New Patient</h1>
+                    <p className="text-slate-500 text-sm">Create a new patient record</p>
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-xl shadow-sm p-8 space-y-6">
+            <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-8 space-y-5 sm:space-y-6">
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -134,8 +145,10 @@ export default function NewPatientPage() {
                     </div>
                 </div>
 
+                {error && <p className="text-sm text-red-500">{error}</p>}
+
                 <div className="pt-4 flex justify-end">
-                    <button type="submit" disabled={loading} className="btn btn-primary min-w-[150px] justify-center">
+                    <button type="submit" disabled={loading} className="btn btn-primary w-full sm:w-auto min-w-[150px] justify-center">
                         {loading ? 'Saving...' : <><Save size={18} className="mr-2" /> Register Patient</>}
                     </button>
                 </div>

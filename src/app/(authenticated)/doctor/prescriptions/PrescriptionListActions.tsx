@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 export default function PrescriptionListActions({ id }: { id: string }) {
     const [isDeleting, setIsDeleting] = useState(false)
     const [showConfirm, setShowConfirm] = useState(false)
+    const [deleteError, setDeleteError] = useState<string | null>(null)
     const router = useRouter()
 
     const handleDelete = async (e: React.MouseEvent) => {
@@ -16,12 +17,13 @@ export default function PrescriptionListActions({ id }: { id: string }) {
         e.stopPropagation()
 
         setIsDeleting(true)
+        setDeleteError(null)
         try {
             const result = await deletePrescription(id)
             if (result.error) throw new Error(result.error)
             router.refresh()
         } catch (error: any) {
-            alert('Failed to delete: ' + error.message)
+            setDeleteError(error.message)
             setIsDeleting(false)
         }
     }
@@ -29,6 +31,7 @@ export default function PrescriptionListActions({ id }: { id: string }) {
     if (showConfirm) {
         return (
             <div className="flex items-center gap-2" onClick={e => e.preventDefault()}>
+                {deleteError && <span className="text-xs text-red-500">{deleteError}</span>}
                 <span className="text-xs text-red-600 font-semibold">Confirm?</span>
                 <button
                     onClick={handleDelete}

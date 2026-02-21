@@ -1,21 +1,19 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/admin'
-import { createClient } from '@/utils/supabase/server'
+import { getUserProfile } from '@/utils/auth'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
-export async function createPatientAttribute(formData: FormData) { // Helper? No, let's do direct object passing or form data
+export async function createPatientAttribute(formData: FormData) {
     // ...
 }
 
 export async function registerPatient(prevState: any, formData: FormData) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const profile = await getUserProfile()
+    if (!profile) return { error: 'Unauthorized' }
+    const clinicId = profile.clinic_id!
 
-    if (!user) return { error: 'Unauthorized' }
-
-    // Use Admin Client to bypass RLS recursion
     const admin = createAdminClient()
 
     const fullName = formData.get('full_name') as string
@@ -32,8 +30,9 @@ export async function registerPatient(prevState: any, formData: FormData) {
         dob: dob,
         gender: gender,
         address: address,
-        // phone: phone, // Schema check?
-        registration_number: registrationNumber
+        phone: phone,
+        registration_number: registrationNumber,
+        clinic_id: clinicId
     }).select().single()
 
     if (error) {
@@ -46,26 +45,26 @@ export async function registerPatient(prevState: any, formData: FormData) {
 }
 
 export async function createWalkInAppointment(patientId: string) {
+    const profile = await getUserProfile()
+    if (!profile) return { error: 'Unauthorized' }
+    const clinicId = profile.clinic_id!
+    const doctorId = profile.doctor_id
+    if (!doctorId) return { error: 'Doctor not found' }
+
     const admin = createAdminClient()
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) return { error: 'Unauthorized' }
-
-    // Get Doctor ID
-    const { data: doctor } = await admin.from('doctors').select('id').eq('profile_id', user.id).single()
-    if (!doctor) return { error: 'Doctor not found' }
 
     // Create Walk-in Appointment
     const now = new Date()
     const endTime = new Date(now.getTime() + 30 * 60000) // 30 mins default
 
     const { data: appt, error } = await admin.from('appointments').insert({
-        doctor_id: doctor.id,
+        doctor_id: doctorId,
         patient_id: patientId,
         start_time: now.toISOString(),
         end_time: endTime.toISOString(),
-        status: 'completed' // Walk-in already happened
+        status: 'completed',
+        appointment_type: 'walk_in',
+        clinic_id: clinicId
     }).select('id').single()
 
     if (error) return { error: error.message }

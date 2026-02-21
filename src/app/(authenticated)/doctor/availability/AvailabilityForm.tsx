@@ -12,6 +12,8 @@ export default function AvailabilityForm({ existingDays, existingStartTime, exis
     const [endTime, setEndTime] = useState(existingEndTime)
     const [duration, setDuration] = useState(existingDuration)
     const [saving, setSaving] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+    const [saved, setSaved] = useState(false)
 
     const days = [
         { name: 'Mon', value: 1 },
@@ -44,9 +46,11 @@ export default function AvailabilityForm({ existingDays, existingStartTime, exis
         const result = await saveAvailability(formData)
 
         if (result.error) {
-            alert('Error saving: ' + result.error)
+            setError(result.error)
+            setSaved(false)
         } else {
-            alert('Availability saved successfully!')
+            setError(null)
+            setSaved(true)
             router.refresh()
         }
 
@@ -54,10 +58,10 @@ export default function AvailabilityForm({ existingDays, existingStartTime, exis
     }
 
     return (
-        <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-xl shadow-sm p-6 max-w-2xl">
-            <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                    <div className="w-32 font-medium text-slate-700 pt-2">Working Days</div>
+        <form onSubmit={handleSubmit} className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 sm:p-6 max-w-2xl">
+            <div className="space-y-5 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
+                    <div className="sm:w-32 font-medium text-slate-700 sm:pt-2">Working Days</div>
                     <div className="flex gap-2 flex-wrap">
                         {days.map(day => (
                             <button
@@ -75,37 +79,37 @@ export default function AvailabilityForm({ existingDays, existingStartTime, exis
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="w-32 font-medium text-slate-700">Working Hours</div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <div className="sm:w-32 font-medium text-slate-700">Working Hours</div>
                     <div className="flex items-center gap-2">
-                        <div className="relative">
+                        <div className="relative flex-1 sm:flex-none">
                             <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
                                 type="time"
                                 value={startTime}
                                 onChange={e => setStartTime(e.target.value)}
-                                className="input pl-10 w-32"
+                                className="input pl-10 w-full sm:w-32"
                                 required
                             />
                         </div>
                         <span className="text-slate-400">to</span>
-                        <div className="relative">
+                        <div className="relative flex-1 sm:flex-none">
                             <Clock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                             <input
                                 type="time"
                                 value={endTime}
                                 onChange={e => setEndTime(e.target.value)}
-                                className="input pl-10 w-32"
+                                className="input pl-10 w-full sm:w-32"
                                 required
                             />
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="w-32 font-medium text-slate-700">Slot Duration</div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+                    <div className="sm:w-32 font-medium text-slate-700">Slot Duration</div>
                     <select
-                        className="input w-48"
+                        className="input w-full sm:w-48"
                         value={duration}
                         onChange={e => setDuration(parseInt(e.target.value))}
                         required
@@ -117,11 +121,14 @@ export default function AvailabilityForm({ existingDays, existingStartTime, exis
                     </select>
                 </div>
 
+                {error && <p className="text-sm text-red-500">{error}</p>}
+                {saved && <p className="text-sm text-emerald-600">Availability saved successfully!</p>}
+
                 <div className="pt-4 border-t border-slate-100 flex justify-end">
                     <button
                         type="submit"
                         disabled={saving || selectedDays.length === 0}
-                        className="btn btn-primary shadow-lg shadow-blue-500/20"
+                        className="btn btn-primary w-full sm:w-auto shadow-lg shadow-blue-500/20"
                     >
                         {saving ? (
                             <><Loader2 size={18} className="mr-2 animate-spin" /> Saving...</>

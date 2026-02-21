@@ -24,24 +24,24 @@ export async function updateSession(request: NextRequest) {
         }
     )
 
+    // Use getSession() instead of getUser() — reads JWT from cookie locally
+    // without making a network round-trip to Supabase auth servers.
+    // Actual token validation happens in getUserProfile() on the server component.
     const {
-        data: { user },
-    } = await supabase.auth.getUser()
-
-    // 1. Protected Routes (e.g. /dashboard) logic?
-    // The user wants: /superadmin/*, /doctor/*, /assistant/*
+        data: { session },
+    } = await supabase.auth.getSession()
 
     const path = request.nextUrl.pathname
 
     // Public Routes
-    if (path === '/' || path.startsWith('/login') || path.startsWith('/auth') || path.startsWith('/book-online')) {
-        if (user && path === '/login') {
-            // If user is logged in and hits login, redirect to their dashboard
-            // We need to know their role. This requires a DB fetch?
-            // Storing role in metadata is faster for middleware!
-            // Let's assume metadata has role, but verify with DB if critical. 
-            // For Redirect convenience, metadata is okay.
-            const role = user.user_metadata.role
+    if (path === '/' || path.startsWith('/login') || path.startsWith('/auth') || path.startsWith('/book-online')
+        || path.startsWith('/clinic') || path.startsWith('/privacy-policy') || path.startsWith('/terms')
+        || path.startsWith('/contact') || path.startsWith('/reset-password')) {
+        // Redirect logged-in users away from login pages
+        // Skip redirect if there's an error param (prevents loop when JWT metadata is stale)
+        if (session?.user && !request.nextUrl.searchParams.has('error')
+            && (path === '/login' || /^\/clinic\/[^/]+\/login$/.test(path))) {
+            const role = session.user.user_metadata.role
             if (role === 'superadmin') return NextResponse.redirect(new URL('/superadmin/dashboard', request.url))
             if (role === 'doctor') return NextResponse.redirect(new URL('/doctor/dashboard', request.url))
             if (role === 'assistant') return NextResponse.redirect(new URL('/assistant/dashboard', request.url))
@@ -50,22 +50,15 @@ export async function updateSession(request: NextRequest) {
     }
 
     // Auth Check
-    if (!user) {
+    if (!session) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
     }
 
-    // Role Protection
-    // We should ideally fetch strict role from DB if security is paramount, 
-    // but doing a DB call in Middleware on every navigation is expensive.
-    // Strategy: Trust metadata for routing, enforce RLS/ServerComponent checks for data.
-    // OR: Cookie-based claim? 
-    // Let's use user_metadata which is inside the JWT (fast).
-    const role = user.user_metadata.role
+    // Role Protection via JWT metadata (fast, no DB call)
+    const role = session.user.user_metadata.role
 
-    // If role is missing from metadata, we can't perform pre-emptive redirection.
-    // We let the Server Component's `requireRole` handle it.
     if (!role) return supabaseResponse
 
     if (path.startsWith('/superadmin') && role !== 'superadmin') {

@@ -1,5 +1,4 @@
 import { requireRole } from '@/utils/auth'
-import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
@@ -7,26 +6,17 @@ import PatientList from './PatientList'
 
 export default async function PatientsPage() {
     const profile = await requireRole(['doctor'])
+    const clinicId = profile.clinic_id!
+    const doctorId = profile.doctor_id!
     const admin = createAdminClient()
 
-    const { data: doctor } = await admin
-        .from('doctors')
-        .select('id')
-        .eq('profile_id', profile.id)
-        .single()
+    if (!doctorId) return <div>Doctor profile not found.</div>
 
-    if (!doctor) return <div>Doctor profile not found.</div>
-
-    // 2. Fetch Patients linked to this doctor via Appointments or Prescriptions
-    const { data: appts } = await admin
-        .from('appointments')
-        .select('patient_id')
-        .eq('doctor_id', doctor.id)
-
-    const { data: rx } = await admin
-        .from('prescriptions')
-        .select('patient_id')
-        .eq('doctor_id', doctor.id)
+    // Fetch patient IDs from appointments and prescriptions in parallel
+    const [{ data: appts }, { data: rx }] = await Promise.all([
+        admin.from('appointments').select('patient_id').eq('doctor_id', doctorId).eq('clinic_id', clinicId),
+        admin.from('prescriptions').select('patient_id').eq('doctor_id', doctorId).eq('clinic_id', clinicId),
+    ])
 
     const patientIds = Array.from(new Set([
         ...(appts?.map(a => a.patient_id) || []),
@@ -36,20 +26,55 @@ export default async function PatientsPage() {
     let patients: any[] = []
 
     if (patientIds.length > 0) {
-        const { data: myPatients } = await admin
-            .from('patients')
-            .select('id, full_name, dob, gender, address, registration_number, created_at')
-            .in('id', patientIds)
-            .order('created_at', { ascending: false })
+        // Fetch patients, visit stats, and appointment types in parallel
+        const [{ data: myPatients }, { data: visitData }, { data: apptTypes }] = await Promise.all([
+            admin
+                .from('patients')
+                .select('id, full_name, dob, gender, phone, address, registration_number, created_at')
+                .in('id', patientIds)
+                .eq('clinic_id', clinicId)
+                .order('created_at', { ascending: false }),
+            admin
+                .from('prescriptions')
+                .select('patient_id, created_at')
+                .eq('doctor_id', doctorId)
+                .eq('clinic_id', clinicId)
+                .in('patient_id', patientIds)
+                .order('created_at', { ascending: false }),
+            admin
+                .from('appointments')
+                .select('patient_id, appointment_type')
+                .eq('doctor_id', doctorId)
+                .eq('clinic_id', clinicId)
+                .in('patient_id', patientIds),
+        ])
 
-        patients = myPatients || []
+        // Build stats map
+        const statsMap: Record<string, { visitCount: number; lastVisitDate: string | null; appointmentTypes: string[] }> = {}
+        for (const id of patientIds) {
+            const pVisits = (visitData || []).filter(v => v.patient_id === id)
+            const pAppts = (apptTypes || []).filter(a => a.patient_id === id)
+            const types = Array.from(new Set(pAppts.map(a => a.appointment_type).filter(Boolean)))
+            statsMap[id] = {
+                visitCount: pVisits.length,
+                lastVisitDate: pVisits.length > 0 ? pVisits[0].created_at : null,
+                appointmentTypes: types,
+            }
+        }
+
+        patients = (myPatients || []).map(p => ({
+            ...p,
+            visit_count: statsMap[p.id]?.visitCount || 0,
+            last_visit_date: statsMap[p.id]?.lastVisitDate || null,
+            appointment_types: statsMap[p.id]?.appointmentTypes || [],
+        }))
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-enter">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">My Patients</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800">My Patients</h1>
                     <p className="text-slate-500 text-sm">Registry of all treated patients</p>
                 </div>
                 <Link href="/doctor/patients/new" className="btn btn-primary shadow-lg shadow-blue-500/20">

@@ -1,25 +1,18 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/admin'
-import { createClient } from '@/utils/supabase/server'
+import { getUserProfile } from '@/utils/auth'
 import { revalidatePath } from 'next/cache'
 
 export async function saveAvailability(formData: FormData) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const profile = await getUserProfile()
+    if (!profile) return { error: 'Unauthorized' }
+    if (!profile.doctor_id) return { error: 'Doctor not found' }
+    if (!profile.clinic_id) return { error: 'Not assigned to a clinic' }
 
-    if (!user) return { error: 'Unauthorized' }
-
+    const doctorId = profile.doctor_id
+    const clinicId = profile.clinic_id
     const admin = createAdminClient()
-
-    // Get doctor ID
-    const { data: doctor } = await admin
-        .from('doctors')
-        .select('id')
-        .eq('profile_id', user.id)
-        .single()
-
-    if (!doctor) return { error: 'Doctor not found' }
 
     const days = formData.getAll('days') as string[] // ['0', '1', ...] for Sun-Sat
     const startTime = formData.get('start_time') as string
@@ -30,16 +23,18 @@ export async function saveAvailability(formData: FormData) {
     await admin
         .from('doctor_slots')
         .delete()
-        .eq('doctor_id', doctor.id)
+        .eq('doctor_id', doctorId)
+        .eq('clinic_id', clinicId)
 
     // Create new slots for selected days
     const slotsToInsert = days.map(day => ({
-        doctor_id: doctor.id,
+        doctor_id: doctorId,
         day_of_week: parseInt(day),
         start_time: startTime,
         end_time: endTime,
         slot_duration: slotDuration,
-        is_active: true
+        is_active: true,
+        clinic_id: clinicId
     }))
 
     if (slotsToInsert.length > 0) {

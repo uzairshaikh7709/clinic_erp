@@ -1,10 +1,14 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/admin'
+import { getUserProfile } from '@/utils/auth'
 import { revalidatePath } from 'next/cache'
 
 export async function savePrescription(data: any) {
     const admin = createAdminClient()
+    const profile = await getUserProfile()
+    if (!profile) return { error: 'Unauthorized' }
+    const clinicId = profile.clinic_id!
 
     try {
         let result
@@ -22,6 +26,7 @@ export async function savePrescription(data: any) {
                     follow_up_date: data.follow_up_date
                 })
                 .eq('id', data.id)
+                .eq('clinic_id', clinicId)
                 .select()
                 .single()
         } else {
@@ -38,7 +43,8 @@ export async function savePrescription(data: any) {
                     diagnosis: data.diagnosis,
                     investigations: data.investigations,
                     advice: data.advice,
-                    follow_up_date: data.follow_up_date
+                    follow_up_date: data.follow_up_date,
+                    clinic_id: clinicId
                 })
                 .select()
                 .single()
@@ -56,6 +62,7 @@ export async function savePrescription(data: any) {
 
         revalidatePath('/doctor/prescriptions')
         revalidatePath(`/doctor/prescriptions/${result.data.id}`)
+        if (data.patient_id) revalidatePath(`/doctor/patients/${data.patient_id}`)
         return { success: true, prescriptionId: result.data.id }
     } catch (error: any) {
         return { error: error.message || 'Failed to save prescription' }
@@ -64,12 +71,16 @@ export async function savePrescription(data: any) {
 
 export async function deletePrescription(id: string) {
     const admin = createAdminClient()
+    const profile = await getUserProfile()
+    if (!profile) return { error: 'Unauthorized' }
+    const clinicId = profile.clinic_id!
 
     try {
         const { error } = await admin
             .from('prescriptions')
             .delete()
             .eq('id', id)
+            .eq('clinic_id', clinicId)
 
         if (error) throw error
 

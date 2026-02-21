@@ -5,6 +5,33 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
 
+export async function forgotPassword(formData: FormData) {
+    const email = (formData.get('email') as string)?.trim()?.toLowerCase()
+    if (!email) return { error: 'Email is required' }
+
+    // Check if user exists
+    const admin = createAdminClient()
+    const { data: profile } = await admin
+        .from('profiles')
+        .select('id')
+        .eq('email', email)
+        .single()
+
+    if (!profile) return { error: 'No account found with this email address' }
+
+    const supabase = await createClient()
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/reset-password`,
+    })
+
+    if (error) {
+        console.error('Password reset error:', error.message)
+        return { error: 'Failed to send reset email. Please try again.' }
+    }
+
+    return { success: true }
+}
 
 export async function login(formData: FormData) {
     const supabase = await createClient()
@@ -32,7 +59,7 @@ export async function login(formData: FormData) {
     const adminClient = createAdminClient()
     const { data: profile, error: profileError } = await adminClient
         .from('profiles')
-        .select('role, is_active')
+        .select('role, is_active, clinic_id')
         .eq('id', user.id)
         .single()
 
@@ -49,15 +76,14 @@ export async function login(formData: FormData) {
 
     const role = profile.role
 
-    // 3. Sync Role to Metadata if missing (Fixes existing users)
-    if (user.user_metadata?.role !== role) {
+    // 3. Sync Role + Clinic to Metadata if missing (Fixes existing users)
+    if (user.user_metadata?.role !== role || user.user_metadata?.clinic_id !== profile.clinic_id) {
         await adminClient.auth.admin.updateUserById(user.id, {
-            user_metadata: { ...user.user_metadata, role }
+            user_metadata: { ...user.user_metadata, role, clinic_id: profile.clinic_id }
         })
+        // Refresh session so the JWT cookie gets the updated metadata
+        await supabase.auth.refreshSession()
     }
-
-    // Revalidate and Redirect
-    revalidatePath('/', 'layout')
 
     if (role === 'superadmin') redirect('/superadmin/dashboard')
     if (role === 'doctor') redirect('/doctor/dashboard')

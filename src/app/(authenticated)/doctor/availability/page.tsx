@@ -27,10 +27,10 @@ export default async function AvailabilityPage() {
     const existingSlot = slots?.[0] || null
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-enter">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800">Availability Settings</h1>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Availability Settings</h1>
                     <p className="text-slate-500">Define your working hours for patient bookings</p>
                 </div>
             </div>

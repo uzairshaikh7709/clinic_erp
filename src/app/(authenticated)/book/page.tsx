@@ -1,27 +1,19 @@
 import { createAdminClient } from '@/utils/supabase/admin'
+import { getUserProfile } from '@/utils/auth'
 import Link from 'next/link'
 import { Calendar, Clock, User, CheckCircle, ChevronRight, Stethoscope } from 'lucide-react'
 import { redirect } from 'next/navigation'
 
 export default async function BookingPage({ searchParams }: { searchParams: Promise<{ doctorId?: string; date?: string; success?: string }> }) {
     const resolvedSearchParams = await searchParams
+    const profile = await getUserProfile()
+    if (!profile) redirect('/login')
+
+    const userFullName = profile.full_name || 'Guest'
+    const clinicId = profile.clinic_id
     const admin = createAdminClient()
-    const supabase = admin
 
-    // Check Auth
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) redirect('/login')
-
-    // Get user profile
-    const { data: profile } = await admin
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single()
-
-    const userFullName = profile?.full_name || 'Guest'
-
-    // 1. Fetch Doctors
+    // Fetch Doctors scoped to user's clinic
     const { data: doctors } = await admin
         .from('doctors')
         .select(`
@@ -30,12 +22,13 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
             registration_number,
             profiles (full_name)
         `)
+        .eq('clinic_id', clinicId)
 
     const selectedDoctorId = resolvedSearchParams.doctorId
     const isSuccess = resolvedSearchParams.success === 'true'
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="max-w-5xl mx-auto space-y-8 animate-enter">
 
             <div className="text-center max-w-2xl mx-auto">
                 <h1 className="text-3xl font-bold text-slate-900">Book an Appointment</h1>
@@ -49,8 +42,8 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
                     </div>
                     <h2 className="text-xl font-bold text-emerald-800 mb-2">Booking Confirmed!</h2>
                     <p className="text-emerald-600 mb-6">Your appointment has been scheduled successfully.</p>
-                    <Link href="/dashboard" className="btn btn-primary w-full justify-center">
-                        Go to Dashboard
+                    <Link href="/patient/prescriptions" className="btn btn-primary w-full justify-center">
+                        Go to My Prescriptions
                     </Link>
                 </div>
             ) : (
@@ -97,7 +90,7 @@ export default async function BookingPage({ searchParams }: { searchParams: Prom
                                     <p>Please select a doctor to view availability.</p>
                                 </div>
                             ) : (
-                                <SlotPicker doctorId={selectedDoctorId} userFullName={userFullName} />
+                                <SlotPicker doctorId={selectedDoctorId} userFullName={userFullName} clinicId={clinicId!} profileId={profile.id} />
                             )}
                         </div>
                     </div>
