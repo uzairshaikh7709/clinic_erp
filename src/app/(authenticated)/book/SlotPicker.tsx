@@ -71,7 +71,7 @@ export default function SlotPicker({ doctorId, userFullName, clinicId, profileId
             const bookedTimes = new Set(
                 (appointments || []).map(apt => {
                     const time = new Date(apt.start_time)
-                    return `${time.getHours().toString().padStart(2, '0')}:${time.getMinutes().toString().padStart(2, '0')}`
+                    return `${time.getUTCHours().toString().padStart(2, '0')}:${time.getUTCMinutes().toString().padStart(2, '0')}`
                 })
             )
 
@@ -92,6 +92,9 @@ export default function SlotPicker({ doctorId, userFullName, clinicId, profileId
         setBooking(true)
         setError(null)
         try {
+            const today = new Date().toISOString().split('T')[0]
+            if (date < today) throw new Error('Appointments cannot be booked for past dates.')
+
             const user = (await supabase.auth.getUser()).data.user
             if (!user) throw new Error("Not logged in")
 

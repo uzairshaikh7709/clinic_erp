@@ -85,7 +85,6 @@ export default async function PatientPrescriptionViewPage({ params }: { params: 
                         </p>
                     </div>
                     <div className="text-right">
-                        <h2 className="text-xl font-bold text-slate-800">{rx.doctors.profiles?.full_name}</h2>
                         <p className="text-slate-600 font-medium">{rx.doctors.specialization}</p>
                         <p className="text-slate-400 text-sm">Reg No: {rx.doctors.registration_number}</p>
                     </div>

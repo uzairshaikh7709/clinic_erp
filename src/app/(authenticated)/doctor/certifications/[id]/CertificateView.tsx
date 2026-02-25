@@ -22,9 +22,10 @@ interface Props {
     doctorName: string
     specialization: string
     registrationNumber: string
+    signatureUrl: string
 }
 
-export default function CertificateView({ cert, doctorName, specialization, registrationNumber }: Props) {
+export default function CertificateView({ cert, doctorName, specialization, registrationNumber, signatureUrl }: Props) {
     const [margin, setMargin] = useState(DEFAULT_MARGIN)
 
     useEffect(() => {
@@ -85,21 +86,6 @@ export default function CertificateView({ cert, doctorName, specialization, regi
                 {/* Adjustable Header Margin (blank space for letterhead) */}
                 <div className="rx-header-space" style={{ height: `${margin}px` }} />
 
-                {/* Doctor Info - Right aligned */}
-                <div className="px-6 sm:px-10 pt-4">
-                    <div className="flex justify-end">
-                        <div className="text-right">
-                            <h2 className="text-lg font-bold text-slate-900">Dr. {doctorName}</h2>
-                            <p className="text-sm text-slate-600">{specialization}</p>
-                            {registrationNumber && (
-                                <p className="text-xs text-slate-500">Reg No: {registrationNumber}</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Divider */}
-                <div className="mx-6 sm:mx-10 border-b border-slate-300 my-3" />
 
                 {/* Title */}
                 <div className="px-6 sm:px-10 text-center my-4">
@@ -158,6 +144,9 @@ export default function CertificateView({ cert, doctorName, specialization, regi
                         <p className="text-sm text-slate-600">Patient Signature</p>
                     </div>
                     <div className="text-center">
+                        {signatureUrl && (
+                            <img src={signatureUrl} alt="Signature" className="h-16 object-contain mx-auto mb-1" />
+                        )}
                         <div className="w-48 border-b border-slate-400 mb-1" />
                         <p className="font-bold text-slate-800 text-sm">Dr. {doctorName}</p>
                         <p className="text-xs text-slate-500">{specialization}</p>

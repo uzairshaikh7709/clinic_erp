@@ -1,6 +1,7 @@
 import { requireRole } from '@/utils/auth'
 import { createAdminClient } from '@/utils/supabase/admin'
 import AppointmentList from './AppointmentList'
+import RealtimeRefresher from '@/components/RealtimeRefresher'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,5 +29,10 @@ export default async function AppointmentsPage() {
         .eq('clinic_id', clinicId)
         .order('start_time', { ascending: false })
 
-    return <AppointmentList appointments={appointments || []} />
+    return (
+        <>
+            <RealtimeRefresher showBadge={false} />
+            <AppointmentList appointments={appointments || []} />
+        </>
+    )
 }

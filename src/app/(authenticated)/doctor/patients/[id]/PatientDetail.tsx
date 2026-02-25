@@ -91,6 +91,7 @@ function TypeBadge({ type }: { type: string | null }) {
 }
 
 export default function PatientDetail({ patient, prescriptions }: { patient: any; prescriptions: any[] }) {
+    const router = useRouter()
     const age = patient.dob ? new Date().getFullYear() - new Date(patient.dob).getFullYear() : null
 
     return (
@@ -188,10 +189,10 @@ export default function PatientDetail({ patient, prescriptions }: { patient: any
                         const apptType = rx.appointments?.appointment_type || null
 
                         return (
-                            <Link
+                            <div
                                 key={rx.id}
-                                href={`/doctor/prescriptions/${rx.id}`}
-                                className="flex items-center justify-between p-4 sm:p-5 hover:bg-slate-50 transition-colors group"
+                                onClick={() => router.push(`/doctor/prescriptions/${rx.id}`)}
+                                className="flex items-center justify-between p-4 sm:p-5 hover:bg-slate-50 transition-colors group cursor-pointer"
                             >
                                 <div className="flex items-start gap-4 min-w-0 flex-1">
                                     <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-500 flex items-center justify-center flex-shrink-0">
@@ -237,7 +238,7 @@ export default function PatientDetail({ patient, prescriptions }: { patient: any
                                     </Link>
                                     <ChevronRight size={18} className="text-slate-300 group-hover:text-slate-500" />
                                 </div>
-                            </Link>
+                            </div>
                         )
                     })}
                 </div>

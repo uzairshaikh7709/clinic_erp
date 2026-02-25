@@ -71,13 +71,13 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
         const bookedTimes = new Set(
             (appointments || []).map((apt: any) => {
                 const d = new Date(apt.start_time)
-                return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+                return `${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}`
             })
         )
 
         const now = new Date()
         const todayStr = now.toISOString().split('T')[0]
-        const currentTotalMins = now.getHours() * 60 + now.getMinutes()
+        const currentTotalMins = now.getUTCHours() * 60 + now.getUTCMinutes()
 
         return generatedSlots.filter(slot => {
             if (bookedTimes.has(slot)) return false
@@ -140,7 +140,7 @@ export async function getAvailableSlotsForClinic(clinicId: string, dateStr: stri
         const appointmentsByDoctor = new Map<string, Set<string>>()
         for (const apt of (appointments || [])) {
             const d = new Date(apt.start_time)
-            const timeStr = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+            const timeStr = `${d.getUTCHours().toString().padStart(2, '0')}:${d.getUTCMinutes().toString().padStart(2, '0')}`
             if (!appointmentsByDoctor.has(apt.doctor_id)) {
                 appointmentsByDoctor.set(apt.doctor_id, new Set())
             }
@@ -149,7 +149,7 @@ export async function getAvailableSlotsForClinic(clinicId: string, dateStr: stri
 
         const now = new Date()
         const todayStr = now.toISOString().split('T')[0]
-        const currentTotalMins = now.getHours() * 60 + now.getMinutes()
+        const currentTotalMins = now.getUTCHours() * 60 + now.getUTCMinutes()
 
         const allSlots: { time: string; doctorId: string }[] = []
 
@@ -219,6 +219,12 @@ export async function submitBooking(formData: {
 }) {
     const supabase = createAdminClient()
     const { doctorId, date, time, patientName, patientPhone, patientDob, patientGender, patientAddress } = formData
+
+    // Reject past dates
+    const today = new Date().toISOString().split('T')[0]
+    if (date < today) {
+        return { error: 'Appointments cannot be booked for past dates.' }
+    }
 
     // Validate phone number
     if (patientPhone) {

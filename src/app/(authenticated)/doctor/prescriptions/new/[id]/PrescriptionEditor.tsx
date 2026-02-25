@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Trash2, Save, Printer, Loader2, Pill, Activity, FileText } from 'lucide-react'
+import { Plus, Trash2, Save, Loader2, Pill, Activity, FileText } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { savePrescription } from '../actions'
+import SuggestField, { saveSuggestion } from '@/components/SuggestField'
 
 export default function PrescriptionEditor({ doctor, patient, appointmentId, initialData, templates = [] }: any) {
     const router = useRouter()
@@ -60,7 +61,6 @@ export default function PrescriptionEditor({ doctor, patient, appointmentId, ini
             const followUpDate = new Date()
             followUpDate.setDate(followUpDate.getDate() + (Number(formData.follow_up_days) || 7))
 
-            // Use Server Action to bypass RLS
             const payload: any = {
                 appointment_id: appointmentId,
                 doctor_id: doctor.id,
@@ -82,7 +82,13 @@ export default function PrescriptionEditor({ doctor, patient, appointmentId, ini
 
             if (result.error) throw new Error(result.error)
 
-            // Redirect to print/view page
+            // Persist non-empty values as suggestions for future prescriptions
+            if (formData.history.trim()) saveSuggestion('history', formData.history.trim())
+            if (formData.findings.trim()) saveSuggestion('findings', formData.findings.trim())
+            if (formData.diagnosis.trim()) saveSuggestion('diagnosis', formData.diagnosis.trim())
+            if (formData.investigations.trim()) saveSuggestion('investigations', formData.investigations.trim())
+            if (formData.advice.trim()) saveSuggestion('advice', formData.advice.trim())
+
             router.push(`/doctor/prescriptions/${result.prescriptionId}`)
         } catch (err: any) {
             console.error(err)
@@ -96,8 +102,6 @@ export default function PrescriptionEditor({ doctor, patient, appointmentId, ini
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-enter">
 
             {/* Left Column: Clinical Notes */}
-
-            {/* Left Column: Clinical Notes */}
             <div className="lg:col-span-1 space-y-6">
                 <div className="bg-white p-4 sm:p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -107,38 +111,40 @@ export default function PrescriptionEditor({ doctor, patient, appointmentId, ini
                     <div className="space-y-4">
                         <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-slate-700">Chief Complaints / History</label>
-                            <textarea
-                                className="input w-full min-h-[80px]"
+                            <SuggestField
+                                storageKey="history"
                                 placeholder="Patient history..."
                                 value={formData.history}
-                                onChange={e => setFormData({ ...formData, history: e.target.value })}
+                                onChange={v => setFormData({ ...formData, history: v })}
                             />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-slate-700">Clinical Findings</label>
-                            <textarea
-                                className="input w-full min-h-[80px]"
+                            <SuggestField
+                                storageKey="findings"
                                 placeholder="Examination notes..."
                                 value={formData.findings}
-                                onChange={e => setFormData({ ...formData, findings: e.target.value })}
+                                onChange={v => setFormData({ ...formData, findings: v })}
                             />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-slate-700">Diagnosis</label>
-                            <input
-                                className="input w-full"
+                            <SuggestField
+                                storageKey="diagnosis"
                                 placeholder="e.g. Acute Viral Fever"
                                 value={formData.diagnosis}
-                                onChange={e => setFormData({ ...formData, diagnosis: e.target.value })}
+                                onChange={v => setFormData({ ...formData, diagnosis: v })}
+                                multiline={false}
                             />
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-slate-700">Investigations Required</label>
-                            <textarea
-                                className="input w-full min-h-[60px]"
+                            <SuggestField
+                                storageKey="investigations"
                                 placeholder="Lab tests, X-rays..."
                                 value={formData.investigations}
-                                onChange={e => setFormData({ ...formData, investigations: e.target.value })}
+                                onChange={v => setFormData({ ...formData, investigations: v })}
+                                minHeight="60px"
                             />
                         </div>
                     </div>
@@ -176,7 +182,6 @@ export default function PrescriptionEditor({ doctor, patient, appointmentId, ini
                     )}
 
                     <div className="space-y-3">
-                        {/* Header - desktop only (matches real prescription: Medicine | Dosage | Duration | Qty | Instructions) */}
                         <div className="hidden md:grid grid-cols-12 gap-2 text-xs font-semibold text-slate-500 px-2 border-b border-slate-200 pb-2">
                             <div className="col-span-4">Medicine</div>
                             <div className="col-span-2">Dosage</div>
@@ -202,7 +207,7 @@ export default function PrescriptionEditor({ doctor, patient, appointmentId, ini
                                     </div>
                                     <input placeholder="Instructions (e.g. After food)" className="input h-7 w-full text-xs text-slate-500 bg-white" value={med.instruction} onChange={e => updateMedication(idx, 'instruction', e.target.value)} />
                                 </div>
-                                {/* Desktop grid layout (matches real prescription columns) */}
+                                {/* Desktop grid layout */}
                                 <div className="hidden md:grid grid-cols-12 gap-2 items-start">
                                     <div className="col-span-4">
                                         <input placeholder="e.g. TAB ACECLOFENAC SP 100MG/325MG" className="input h-8 w-full text-sm" value={med.name} onChange={e => updateMedication(idx, 'name', e.target.value)} />
@@ -237,11 +242,11 @@ export default function PrescriptionEditor({ doctor, patient, appointmentId, ini
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="space-y-1.5">
                             <label className="text-sm font-semibold text-slate-700">General Advice</label>
-                            <textarea
-                                className="input w-full min-h-[80px]"
+                            <SuggestField
+                                storageKey="advice"
                                 placeholder="Diet restrictions, rest..."
                                 value={formData.advice}
-                                onChange={e => setFormData({ ...formData, advice: e.target.value })}
+                                onChange={v => setFormData({ ...formData, advice: v })}
                             />
                         </div>
                         <div className="space-y-1.5">

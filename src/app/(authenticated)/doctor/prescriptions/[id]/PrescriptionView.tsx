@@ -46,6 +46,7 @@ export default function PrescriptionView({ rx, org }: { rx: any; org: any }) {
     const doctorName = rx.doctors?.profiles?.full_name || ''
     const specialization = rx.doctors?.specialization || ''
     const regNo = rx.doctors?.registration_number || ''
+    const signatureUrl = rx.doctors?.signature_url || ''
 
     const calcAge = () => {
         if (!rx.patients?.dob) return 'N/A'
@@ -109,19 +110,6 @@ export default function PrescriptionView({ rx, org }: { rx: any; org: any }) {
                 {/* Adjustable Header Margin (blank space for letterhead) */}
                 <div className="rx-header-space" style={{ height: `${headerMargin}px` }} />
 
-                {/* Doctor Info - Right aligned */}
-                <div className="px-6 sm:px-10 pt-4">
-                    <div className="flex justify-end">
-                        <div className="text-right">
-                            <h2 className="text-lg font-bold text-slate-900">{doctorName}</h2>
-                            <p className="text-sm text-slate-600">{specialization}</p>
-                            <p className="text-xs text-slate-500">Reg No: {regNo}</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Divider */}
-                <div className="mx-6 sm:mx-10 border-b border-slate-300 my-3" />
 
                 {/* Patient Details */}
                 <div className="px-6 sm:px-10">
@@ -230,6 +218,9 @@ export default function PrescriptionView({ rx, org }: { rx: any; org: any }) {
                 {/* Signature */}
                 <div className="px-6 sm:px-10 mt-12 mb-8 flex justify-end">
                     <div className="text-center">
+                        {signatureUrl && (
+                            <img src={signatureUrl} alt="Signature" className="h-16 object-contain mx-auto mb-1" />
+                        )}
                         <div className="w-48 border-b border-slate-400 mb-1" />
                         <p className="font-bold text-slate-800 text-sm">{doctorName}</p>
                         <p className="text-xs text-slate-500">Reg No: {regNo}</p>

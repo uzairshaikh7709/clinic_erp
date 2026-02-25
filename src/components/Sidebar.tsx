@@ -1,6 +1,6 @@
 'use client'
 
-import { LayoutDashboard, Calendar, Users, FileText, Activity, Clock, Building2, UserCog, Mail, Globe, Award } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, FileText, Activity, Clock, Building2, UserCog, Mail, Globe, Award, Settings } from 'lucide-react'
 import { SignOutButton } from '@/components/SignOutButton'
 import { NavItem } from '@/components/NavItem'
 
@@ -42,6 +42,7 @@ export function Sidebar({ role, profile }: SidebarProps) {
                         </div>
                         <NavItem href="/doctor/team" icon={UserCog} label={profile?.is_clinic_owner ? 'Team' : 'My Staff'} />
                         <NavItem href="/doctor/clinic" icon={Globe} label="Clinic" />
+                        <NavItem href="/doctor/settings" icon={Settings} label="Settings" />
                     </>
                 )}
 

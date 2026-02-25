@@ -1,7 +1,11 @@
 import { requireRole } from '@/utils/auth'
 import { createAdminClient } from '@/utils/supabase/admin'
 import Link from 'next/link'
-import { Plus, Clock, User, Calendar, FileText, ChevronRight, Phone } from 'lucide-react'
+import { Plus, Clock, User, Calendar, FileText, ChevronRight } from 'lucide-react'
+import DashboardSchedule from './DashboardSchedule'
+import RealtimeRefresher from '@/components/RealtimeRefresher'
+
+export const dynamic = 'force-dynamic'
 
 export default async function DoctorDashboard() {
     const profile = await requireRole(['doctor'])
@@ -41,7 +45,7 @@ export default async function DoctorDashboard() {
         patient: Array.isArray(a.patients) ? a.patients[0]?.full_name : (a.patients as any)?.full_name || 'Unknown',
         phone: Array.isArray(a.patients) ? a.patients[0]?.phone : (a.patients as any)?.phone || null,
         startTime: a.start_time,
-        time: new Date(a.start_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }),
+        time: new Date(a.start_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' }),
         type: 'Consultation',
         status: a.status,
         img: (Array.isArray(a.patients) ? a.patients[0]?.full_name : (a.patients as any)?.full_name || 'U').split(' ').map((n: any) => n[0]).join('').slice(0, 2)
@@ -54,7 +58,10 @@ export default async function DoctorDashboard() {
         <div className="space-y-6 md:space-y-8 animate-enter">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Dashboard</h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Dashboard</h1>
+                        <RealtimeRefresher />
+                    </div>
                     <p className="text-slate-500 text-sm">Welcome back, Dr. {profile.full_name?.split(' ')[0]}</p>
                 </div>
                 <div className="flex gap-2 sm:gap-3">
@@ -86,53 +93,7 @@ export default async function DoctorDashboard() {
                         <Link href="/doctor/appointments" className="text-sm font-medium text-indigo-600 hover:underline">See All</Link>
                     </div>
 
-                    <div className="divide-y divide-slate-100">
-                        {appointments.map((apt) => (
-                            <div key={apt.id} className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0 hover:bg-slate-50 transition-colors group">
-                                <div className="flex items-center gap-3 sm:gap-4 min-w-0">
-                                    <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs sm:text-sm flex-shrink-0">
-                                        {apt.img}
-                                    </div>
-                                    <div className="min-w-0">
-                                        <p className="font-bold text-slate-800 text-sm sm:text-base truncate">{apt.patient}</p>
-                                        <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-500 mt-0.5">
-                                            <span className="flex items-center gap-1"><Clock size={13} /> {apt.time}</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2 sm:gap-3 pl-13 sm:pl-0 flex-shrink-0">
-                                    <StatusBadge status={apt.status} />
-                                    <div className="flex gap-1">
-                                        {apt.status === 'booked' && (
-                                            <Link href={`/doctor/prescriptions/new/${apt.id}`} className="p-1.5 sm:p-2 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-indigo-600 transition-colors" title="Start Visit">
-                                                <FileText size={16} />
-                                            </Link>
-                                        )}
-                                        {apt.phone && (
-                                            <a
-                                                href={`https://wa.me/${apt.phone.replace(/[^0-9]/g, '')}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors text-xs font-medium"
-                                                title="WhatsApp"
-                                            >
-                                                <Phone size={13} />
-                                                <span className="hidden sm:inline">{apt.phone}</span>
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-
-                        {appointments.length === 0 && (
-                            <div className="p-10 sm:p-12 text-center text-slate-400">
-                                <Calendar size={32} className="mx-auto mb-2 opacity-30" />
-                                <p>No appointments scheduled for today.</p>
-                            </div>
-                        )}
-                    </div>
+                    <DashboardSchedule appointments={appointments} />
                 </div>
 
                 {/* Quick Actions */}
@@ -182,15 +143,3 @@ function StatCard({ label, value, icon: Icon, color, bg }: {
     )
 }
 
-function StatusBadge({ status }: { status: string }) {
-    let styles = 'bg-slate-100 text-slate-600'
-    if (status === 'booked') styles = 'bg-blue-50 text-blue-700'
-    if (status === 'completed') styles = 'bg-emerald-50 text-emerald-700'
-    if (status === 'cancelled') styles = 'bg-red-50 text-red-600'
-
-    return (
-        <span className={`px-2.5 py-1 rounded-full text-xs font-bold capitalize ${styles}`}>
-            {status}
-        </span>
-    )
-}

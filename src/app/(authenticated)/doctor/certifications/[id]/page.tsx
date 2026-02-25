@@ -18,7 +18,7 @@ export default async function CertificateViewPage({ params }: { params: Promise<
             .single(),
         admin
             .from('doctors')
-            .select('specialization, registration_number')
+            .select('specialization, registration_number, signature_url')
             .eq('id', doctor.doctor_id)
             .single(),
     ])
@@ -31,6 +31,7 @@ export default async function CertificateViewPage({ params }: { params: Promise<
             doctorName={doctor.full_name || 'Doctor'}
             specialization={doctorRecord?.specialization || ''}
             registrationNumber={doctorRecord?.registration_number || ''}
+            signatureUrl={doctorRecord?.signature_url || ''}
         />
     )
 }

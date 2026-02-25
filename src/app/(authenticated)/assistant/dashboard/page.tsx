@@ -2,6 +2,9 @@ import { requireRole } from '@/utils/auth'
 import { createAdminClient } from '@/utils/supabase/admin'
 import Link from 'next/link'
 import { Calendar, User, Phone, Clock, Users, ChevronRight } from 'lucide-react'
+import RealtimeRefresher from '@/components/RealtimeRefresher'
+
+export const dynamic = 'force-dynamic'
 
 export default async function AssistantDashboard() {
     const profile = await requireRole(['assistant'])
@@ -49,7 +52,10 @@ export default async function AssistantDashboard() {
         <div className="space-y-6 md:space-y-8 animate-enter">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Front Desk Portal</h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Front Desk Portal</h1>
+                        <RealtimeRefresher />
+                    </div>
                     <p className="text-slate-500 text-sm">Logged in as {profile.full_name}</p>
                 </div>
                 <div className="flex gap-2 sm:gap-3">
@@ -99,7 +105,7 @@ export default async function AssistantDashboard() {
                                         <div className="min-w-0">
                                             <p className="font-bold text-slate-800 text-sm sm:text-base truncate">{apt.patients?.full_name}</p>
                                             <p className="text-xs text-slate-500">
-                                                {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
                                             </p>
                                         </div>
                                     </div>

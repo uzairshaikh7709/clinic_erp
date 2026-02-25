@@ -14,7 +14,7 @@ export default async function ViewPrescriptionPage({ params }: { params: Promise
             .select(`
                 *,
                 doctors (
-                    specialization, registration_number,
+                    specialization, registration_number, signature_url,
                     profiles (full_name)
                 ),
                 patients (

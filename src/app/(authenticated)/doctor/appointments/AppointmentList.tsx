@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Search, ArrowUpDown, Filter, X, Clock, Phone, Calendar } from 'lucide-react'
 import CancelButton from './CancelButton'
+import RealtimeRefresher from '@/components/RealtimeRefresher'
 
 export default function AppointmentList({ appointments }: { appointments: any[] }) {
     const [search, setSearch] = useState('')
@@ -13,6 +14,25 @@ export default function AppointmentList({ appointments }: { appointments: any[] 
     const [dateFrom, setDateFrom] = useState('')
     const [dateTo, setDateTo] = useState('')
     const [typeFilter, setTypeFilter] = useState<'all' | 'online' | 'walk_in'>('all')
+    const [visitedIds, setVisitedIds] = useState<Set<string>>(new Set())
+
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem('dr_visited_appointments')
+            if (stored) setVisitedIds(new Set(JSON.parse(stored)))
+        } catch {}
+    }, [])
+
+    const markVisited = (id: string) => {
+        setVisitedIds(prev => {
+            const updated = new Set(prev)
+            updated.add(id)
+            try {
+                localStorage.setItem('dr_visited_appointments', JSON.stringify([...updated]))
+            } catch {}
+            return updated
+        })
+    }
 
     const hasActiveFilters = dateFrom || dateTo || typeFilter !== 'all'
 
@@ -60,7 +80,10 @@ export default function AppointmentList({ appointments }: { appointments: any[] 
         <div className="space-y-6 animate-enter">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Appointments</h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Appointments</h1>
+                        <RealtimeRefresher />
+                    </div>
                     <p className="text-slate-500 text-sm">Manage your schedule and patient visits</p>
                 </div>
                 {/* Status Tabs */}
@@ -154,10 +177,10 @@ export default function AppointmentList({ appointments }: { appointments: any[] 
                     </div>
                 ) : (
                     sorted.map((apt: any) => (
-                        <div key={apt.id} className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+                        <div key={apt.id} className={`border rounded-xl p-4 space-y-3 transition-colors ${visitedIds.has(apt.id) ? 'bg-sky-50 border-l-4 border-[#0077B6] border-slate-200' : 'bg-white border-slate-200'}`}>
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-full bg-blue-50 text-[#0077B6] flex items-center justify-center font-bold text-xs">
+                                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs ${visitedIds.has(apt.id) ? 'bg-[#0077B6]/10 text-[#0077B6]' : 'bg-blue-50 text-[#0077B6]'}`}>
                                         {apt.patients?.full_name?.[0] || 'U'}
                                     </div>
                                     <div>
@@ -177,13 +200,13 @@ export default function AppointmentList({ appointments }: { appointments: any[] 
                             <div className="flex items-center justify-between text-xs text-slate-500">
                                 <span className="flex items-center gap-1">
                                     <Clock size={13} />
-                                    {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &middot; {new Date(apt.start_time).toLocaleDateString()}
+                                    {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} &middot; {new Date(apt.start_time).toLocaleDateString()}
                                 </span>
                                 <AppointmentTypeBadge type={apt.appointment_type} />
                             </div>
                             <div className="flex items-center gap-2 flex-wrap">
                                 {apt.status === 'booked' && (
-                                    <Link href={`/doctor/prescriptions/new/${apt.id}`} className="btn btn-xs btn-primary">
+                                    <Link href={`/doctor/prescriptions/new/${apt.id}`} className="btn btn-xs btn-primary" onClick={() => markVisited(apt.id)}>
                                         Start Visit
                                     </Link>
                                 )}
@@ -229,11 +252,11 @@ export default function AppointmentList({ appointments }: { appointments: any[] 
                                 </tr>
                             ) : (
                                 sorted.map((apt: any) => (
-                                    <tr key={apt.id} className="hover:bg-slate-50 transition-colors group">
-                                        <td className="px-4 lg:px-6 py-3 font-medium text-slate-700 whitespace-nowrap">
+                                    <tr key={apt.id} className={`transition-colors group ${visitedIds.has(apt.id) ? 'bg-sky-50' : 'hover:bg-slate-50'}`}>
+                                        <td className={`px-4 lg:px-6 py-3 font-medium text-slate-700 whitespace-nowrap${visitedIds.has(apt.id) ? ' border-l-4 border-[#0077B6]' : ''}`}>
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-slate-900">
-                                                    {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
                                                 </span>
                                                 <span className="text-xs text-slate-400">
                                                     {new Date(apt.start_time).toLocaleDateString()}
@@ -267,7 +290,7 @@ export default function AppointmentList({ appointments }: { appointments: any[] 
                                         <td className="px-4 lg:px-6 py-3 text-right">
                                             <div className="flex items-center justify-end gap-2">
                                                 {apt.status === 'booked' && (
-                                                    <Link href={`/doctor/prescriptions/new/${apt.id}`} className="btn btn-xs btn-primary">
+                                                    <Link href={`/doctor/prescriptions/new/${apt.id}`} className="btn btn-xs btn-primary" onClick={() => markVisited(apt.id)}>
                                                         Start Visit
                                                     </Link>
                                                 )}

@@ -2,6 +2,9 @@ import { requireRole } from '@/utils/auth'
 import { createAdminClient } from '@/utils/supabase/admin'
 import Link from 'next/link'
 import { Calendar, User, Plus, Phone, Clock } from 'lucide-react'
+import RealtimeRefresher from '@/components/RealtimeRefresher'
+
+export const dynamic = 'force-dynamic'
 
 export default async function AssistantAppointmentsPage() {
     const profile = await requireRole(['assistant'])
@@ -34,7 +37,10 @@ export default async function AssistantAppointmentsPage() {
         <div className="space-y-6 animate-enter">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Doctor&apos;s Schedule</h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Doctor&apos;s Schedule</h1>
+                        <RealtimeRefresher />
+                    </div>
                     <p className="text-slate-500 text-sm">Manage appointments for your assigned doctor</p>
                 </div>
                 <Link href="/assistant/patients/new" className="btn btn-primary shadow-lg shadow-blue-500/20 text-sm">
@@ -72,7 +78,7 @@ export default async function AssistantAppointmentsPage() {
                             <div className="flex items-center justify-between flex-wrap gap-2">
                                 <span className="flex items-center gap-1 text-xs text-slate-500">
                                     <Clock size={13} />
-                                    {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} &middot; {new Date(apt.start_time).toLocaleDateString()}
+                                    {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} &middot; {new Date(apt.start_time).toLocaleDateString()}
                                 </span>
                                 <AppointmentTypeBadge type={apt.appointment_type} />
                                 {apt.patients?.phone && (
@@ -116,7 +122,7 @@ export default async function AssistantAppointmentsPage() {
                                 (appointments || []).map((apt: any) => (
                                     <tr key={apt.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-4 lg:px-6 py-3 font-bold text-slate-800">
-                                            {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
                                             <div className="text-xs font-normal text-slate-400">{new Date(apt.start_time).toLocaleDateString()}</div>
                                         </td>
                                         <td className="px-4 lg:px-6 py-3">

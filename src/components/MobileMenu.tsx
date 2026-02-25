@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
     Menu, X, LayoutDashboard, Calendar, Users, FileText,
-    Clock, Building2, UserCog, LogOut, LucideIcon, Mail, Globe, Award
+    Clock, Building2, UserCog, LogOut, LucideIcon, Mail, Globe, Award, Settings
 } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 
@@ -117,6 +117,7 @@ export function MobileMenu({ role, profile }: { role: string; profile: any }) {
                                     </div>
                                     <MobileNavItem href="/doctor/team" icon={UserCog} label={profile?.is_clinic_owner ? 'Team' : 'My Staff'} onClick={close} />
                                     <MobileNavItem href="/doctor/clinic" icon={Globe} label="Clinic" onClick={close} />
+                                    <MobileNavItem href="/doctor/settings" icon={Settings} label="Settings" onClick={close} />
                                 </>
                             )}
 
