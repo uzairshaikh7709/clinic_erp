@@ -10,11 +10,12 @@ import { getAvailableSlotsForClinic, submitBooking } from './actions'
 
 type SlotInfo = { time: string; doctorId: string }
 
-export default function BookingWizard({ clinicId, clinicName }: { clinicId: string; clinicName: string }) {
+export default function BookingWizard({ clinicId, clinicName, clinicSlug }: { clinicId: string; clinicName: string; clinicSlug: string }) {
     const router = useRouter()
 
     const [step, setStep] = useState(1)
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+    const [date, setDate] = useState('')
+    const [localToday, setLocalToday] = useState('')
     const [availableSlots, setAvailableSlots] = useState<SlotInfo[]>([])
     const [selectedSlot, setSelectedSlot] = useState<SlotInfo | null>(null)
 
@@ -31,6 +32,14 @@ export default function BookingWizard({ clinicId, clinicName }: { clinicId: stri
     const [booking, setBooking] = useState(false)
     const [success, setSuccess] = useState(false)
     const [bookingError, setBookingError] = useState<string | null>(null)
+
+    // Compute today's date on the client (not during SSR) to avoid timezone mismatch
+    useEffect(() => {
+        const now = new Date()
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+        setLocalToday(today)
+        setDate(today)
+    }, [])
 
     const validatePhone = (value: string): boolean => {
         const digits = value.replace(/[^0-9]/g, '')
@@ -83,11 +92,20 @@ export default function BookingWizard({ clinicId, clinicName }: { clinicId: stri
                 patientAddress: address || undefined
             })
 
-            if (result.error) throw new Error(result.error)
+            if (result.error) {
+                setBookingError(result.error)
+                // If slot was taken, refresh slots and go back to step 1
+                if (result.error.includes('slot')) {
+                    setSelectedSlot(null)
+                    loadSlots()
+                    setStep(1)
+                }
+                return
+            }
             setSuccess(true)
             setStep(4)
         } catch (error: any) {
-            setBookingError(error.message)
+            setBookingError(error.message || 'Something went wrong. Please try again.')
         } finally {
             setBooking(false)
         }
@@ -105,8 +123,8 @@ export default function BookingWizard({ clinicId, clinicName }: { clinicId: stri
                 <p className="text-slate-500 mb-8">
                     Your appointment at <span className="font-semibold text-slate-800">{clinicName}</span> is set for <span className="font-semibold text-slate-800">{date}</span> at <span className="font-semibold text-slate-800">{selectedSlot?.time}</span>.
                 </p>
-                <button onClick={() => router.push('/')} className="btn btn-primary w-full justify-center">
-                    Return Home
+                <button onClick={() => router.push(`/clinic/${clinicSlug}`)} className="btn btn-primary w-full justify-center">
+                    Return to Clinic
                 </button>
             </div>
         )
@@ -151,7 +169,7 @@ export default function BookingWizard({ clinicId, clinicName }: { clinicId: stri
                                         className="input pl-10 w-full md:w-auto"
                                         value={date}
                                         onChange={e => setDate(e.target.value)}
-                                        min={new Date().toISOString().split('T')[0]}
+                                        min={localToday}
                                     />
                                 </div>
                             </div>

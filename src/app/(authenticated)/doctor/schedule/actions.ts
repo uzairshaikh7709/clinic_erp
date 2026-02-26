@@ -33,12 +33,11 @@ export async function saveDoctorSlots(_doctorId: string, slots: any[]) {
     const clinicId = profile.clinic_id
     const admin = createAdminClient()
 
-    // Delete existing slots for this doctor
+    // Delete existing slots for this doctor (unique constraint is on doctor_id + day_of_week + start_time)
     const { error: deleteError } = await admin
         .from('doctor_slots')
         .delete()
         .eq('doctor_id', doctorId)
-        .eq('clinic_id', clinicId)
 
     if (deleteError) {
         console.error('Error deleting old slots:', deleteError)

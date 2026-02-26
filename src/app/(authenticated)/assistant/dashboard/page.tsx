@@ -12,7 +12,7 @@ export default async function AssistantDashboard() {
     const admin = createAdminClient()
 
     const doctorId = profile.assigned_doctor_id
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
 
     let todaysAppointments: any[] = []
     let pendingCount = 0
@@ -70,10 +70,10 @@ export default async function AssistantDashboard() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                <StatCard label="Pending Check-ins" value={pendingCount} icon={User} color="text-sky-500" bg="bg-sky-50" />
-                <StatCard label="Scheduled Today" value={todayCount} icon={Calendar} color="text-emerald-500" bg="bg-emerald-50" />
-                <StatCard label="Completed Today" value={completedCount} icon={Clock} color="text-amber-500" bg="bg-amber-50" />
-                <StatCard label="Total Patients" value={totalPatients} icon={Users} color="text-violet-500" bg="bg-violet-50" />
+                <StatCard label="Pending Check-ins" value={pendingCount} icon={User} color="text-sky-500" bg="bg-sky-50" href="/assistant/appointments" />
+                <StatCard label="Scheduled Today" value={todayCount} icon={Calendar} color="text-emerald-500" bg="bg-emerald-50" href="/assistant/appointments" />
+                <StatCard label="Completed Today" value={completedCount} icon={Clock} color="text-amber-500" bg="bg-amber-50" href="/assistant/appointments" />
+                <StatCard label="Total Patients" value={totalPatients} icon={Users} color="text-violet-500" bg="bg-violet-50" href="/assistant/patients" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -105,7 +105,7 @@ export default async function AssistantDashboard() {
                                         <div className="min-w-0">
                                             <p className="font-bold text-slate-800 text-sm sm:text-base truncate">{apt.patients?.full_name}</p>
                                             <p className="text-xs text-slate-500">
-                                                {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
+                                                {new Date(apt.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' })}
                                             </p>
                                         </div>
                                     </div>
@@ -162,11 +162,11 @@ export default async function AssistantDashboard() {
     )
 }
 
-function StatCard({ label, value, icon: Icon, color, bg }: {
-    label: string; value: number; icon: any; color: string; bg: string
+function StatCard({ label, value, icon: Icon, color, bg, href }: {
+    label: string; value: number; icon: any; color: string; bg: string; href?: string
 }) {
-    return (
-        <div className="card p-3 sm:p-5 flex items-start justify-between">
+    const content = (
+        <>
             <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-slate-500 mb-1 truncate">{label}</p>
                 <p className="text-2xl sm:text-3xl font-bold text-slate-900">{value}</p>
@@ -175,6 +175,18 @@ function StatCard({ label, value, icon: Icon, color, bg }: {
                 <Icon size={20} className="sm:hidden" />
                 <Icon size={24} className="hidden sm:block" />
             </div>
+        </>
+    )
+    if (href) {
+        return (
+            <Link href={href} className="card card-hover p-3 sm:p-5 flex items-start justify-between">
+                {content}
+            </Link>
+        )
+    }
+    return (
+        <div className="card p-3 sm:p-5 flex items-start justify-between">
+            {content}
         </div>
     )
 }

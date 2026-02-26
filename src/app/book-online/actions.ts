@@ -7,6 +7,18 @@ const DEFAULT_START = '10:00'
 const DEFAULT_END = '17:00'
 const DEFAULT_DURATION = 30
 
+const CLINIC_TZ = 'Asia/Kolkata'
+
+function getLocalToday() {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: CLINIC_TZ }).format(new Date())
+}
+
+function getLocalCurrentMins() {
+    const now = new Date()
+    const parts = new Intl.DateTimeFormat('en-GB', { timeZone: CLINIC_TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(now).split(':')
+    return parseInt(parts[0]) * 60 + parseInt(parts[1])
+}
+
 // Existing: fetch slots for a single doctor
 export async function getAvailableSlots(doctorId: string, dateStr: string) {
     unstable_noStore()
@@ -19,8 +31,10 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
             .eq('id', doctorId)
             .single()
 
-        const clinicId = doctor?.clinic_id
-        const selectedDate = new Date(dateStr)
+        if (!doctor) return []
+
+        const clinicId = doctor.clinic_id
+        const selectedDate = new Date(dateStr + 'T00:00:00')
         const dayOfWeek = selectedDate.getDay()
 
         const { data: slotConfig } = await supabase
@@ -28,7 +42,6 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
             .select('*')
             .eq('doctor_id', doctorId)
             .eq('day_of_week', dayOfWeek)
-            .eq('clinic_id', clinicId)
             .single()
 
         if (slotConfig && !slotConfig.is_active) return []
@@ -75,9 +88,8 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
             })
         )
 
-        const now = new Date()
-        const todayStr = now.toISOString().split('T')[0]
-        const currentTotalMins = now.getUTCHours() * 60 + now.getUTCMinutes()
+        const todayStr = getLocalToday()
+        const currentTotalMins = getLocalCurrentMins()
 
         return generatedSlots.filter(slot => {
             if (bookedTimes.has(slot)) return false
@@ -93,13 +105,13 @@ export async function getAvailableSlots(doctorId: string, dateStr: string) {
     }
 }
 
-// New: fetch combined available slots across ALL doctors in a clinic
+// Fetch combined available slots across ALL doctors in a clinic
 export async function getAvailableSlotsForClinic(clinicId: string, dateStr: string) {
     unstable_noStore()
     const supabase = createAdminClient()
 
     try {
-        // 1. Get all active doctors in one query
+        // 1. Get all active doctors
         const { data: doctors } = await supabase
             .from('doctors')
             .select('id')
@@ -108,22 +120,21 @@ export async function getAvailableSlotsForClinic(clinicId: string, dateStr: stri
         if (!doctors || doctors.length === 0) return []
 
         const doctorIds = doctors.map(d => d.id)
-        const selectedDate = new Date(dateStr)
+        const selectedDate = new Date(dateStr + 'T00:00:00')
         const dayOfWeek = selectedDate.getDay()
 
-        // 2. Batch fetch all slot configs for this day of week (1 query instead of N)
+        // 2. Batch fetch all slot configs for this day of week
         const { data: slotConfigs } = await supabase
             .from('doctor_slots')
             .select('*')
             .in('doctor_id', doctorIds)
             .eq('day_of_week', dayOfWeek)
-            .eq('clinic_id', clinicId)
 
         const slotConfigMap = new Map(
             (slotConfigs || []).map(sc => [sc.doctor_id, sc])
         )
 
-        // 3. Batch fetch all appointments for these doctors on this date (1 query instead of N)
+        // 3. Batch fetch all appointments for these doctors on this date
         const startOfDay = `${dateStr}T00:00:00`
         const endOfDay = `${dateStr}T23:59:59`
 
@@ -147,9 +158,8 @@ export async function getAvailableSlotsForClinic(clinicId: string, dateStr: stri
             appointmentsByDoctor.get(apt.doctor_id)!.add(timeStr)
         }
 
-        const now = new Date()
-        const todayStr = now.toISOString().split('T')[0]
-        const currentTotalMins = now.getUTCHours() * 60 + now.getUTCMinutes()
+        const todayStr = getLocalToday()
+        const currentTotalMins = getLocalCurrentMins()
 
         const allSlots: { time: string; doctorId: string }[] = []
 
@@ -218,46 +228,76 @@ export async function submitBooking(formData: {
     patientAddress?: string
 }) {
     const supabase = createAdminClient()
-    const { doctorId, date, time, patientName, patientPhone, patientDob, patientGender, patientAddress } = formData
+    const { doctorId, date, time, patientName: rawName, patientPhone, patientDob, patientGender, patientAddress } = formData
+
+    const patientName = rawName.trim()
+    if (!patientName) return { error: 'Patient name is required.' }
 
     // Reject past dates
-    const today = new Date().toISOString().split('T')[0]
-    if (date < today) {
+    const todayStr = getLocalToday()
+    if (date < todayStr) {
         return { error: 'Appointments cannot be booked for past dates.' }
     }
 
-    // Validate phone number
-    if (patientPhone) {
-        const digits = patientPhone.replace(/[^0-9]/g, '')
-        if (digits.length < 10 || digits.length > 15) {
-            return { error: 'Phone number must be between 10 and 15 digits' }
+    // Reject past time slots for today
+    if (date === todayStr) {
+        const [h, m] = time.split(':').map(Number)
+        if (h * 60 + m <= getLocalCurrentMins()) {
+            return { error: 'This time slot has already passed.' }
         }
     }
 
+    // Validate phone
+    const phoneDigits = patientPhone.replace(/[^0-9]/g, '')
+    if (phoneDigits.length < 10 || phoneDigits.length > 15) {
+        return { error: 'Phone number must be between 10 and 15 digits.' }
+    }
+
     try {
+        // Verify doctor is active
         const { data: doctorRecord } = await supabase
             .from('doctors')
             .select('clinic_id')
             .eq('id', doctorId)
             .single()
 
-        const clinicId = doctorRecord?.clinic_id
+        if (!doctorRecord) return { error: 'This doctor is currently unavailable.' }
 
-        // 1. Find or Create Patient
-        let patientId
+        const clinicId = doctorRecord.clinic_id
+
+        // Double-booking check: verify the slot is still available
+        const startTime = `${date}T${time}:00`
+        const { data: existingAppt } = await supabase
+            .from('appointments')
+            .select('id')
+            .eq('doctor_id', doctorId)
+            .eq('start_time', startTime)
+            .neq('status', 'cancelled')
+            .limit(1)
+            .single()
+
+        if (existingAppt) {
+            return { error: 'This time slot was just booked by another patient. Please select a different time.' }
+        }
+
+        // Find or create patient (match by phone within clinic for accuracy)
+        let patientId: string
 
         const { data: existingPatient } = await supabase
             .from('patients')
-            .select('id, phone')
-            .eq('full_name', patientName)
+            .select('id')
+            .eq('phone', patientPhone)
             .eq('clinic_id', clinicId)
+            .limit(1)
             .single()
 
         if (existingPatient) {
             patientId = existingPatient.id
-            if (patientPhone && patientPhone !== existingPatient.phone) {
-                await supabase.from('patients').update({ phone: patientPhone }).eq('id', patientId)
-            }
+            // Update name/address if changed
+            await supabase.from('patients').update({
+                full_name: patientName,
+                ...(patientAddress ? { address: patientAddress } : {}),
+            }).eq('id', patientId)
         } else {
             const { data: newP, error: pErr } = await supabase.from('patients').insert({
                 full_name: patientName,
@@ -265,16 +305,16 @@ export async function submitBooking(formData: {
                 dob: patientDob || '1990-01-01',
                 gender: patientGender || 'Other',
                 address: patientAddress || '',
-                registration_number: 'WEB-' + Math.floor(Math.random() * 100000),
+                registration_number: 'WEB-' + Date.now().toString(36).toUpperCase(),
                 clinic_id: clinicId
-            }).select().single()
+            }).select('id').single()
 
             if (pErr) throw pErr
             patientId = newP.id
         }
 
-        // 2. Calculate End Time
-        const selectedDate = new Date(date)
+        // Calculate end time
+        const selectedDate = new Date(date + 'T00:00:00')
         const dayOfWeek = selectedDate.getDay()
 
         const { data: slotConfig } = await supabase
@@ -282,20 +322,17 @@ export async function submitBooking(formData: {
             .select('slot_duration')
             .eq('doctor_id', doctorId)
             .eq('day_of_week', dayOfWeek)
-            .eq('is_active', true)
-            .eq('clinic_id', clinicId)
             .single()
 
         const duration = slotConfig?.slot_duration || DEFAULT_DURATION
 
-        const startTime = `${date}T${time}:00`
         const [hours, minutes] = time.split(':').map(Number)
         const endMinutes = hours * 60 + minutes + duration
         const endHours = Math.floor(endMinutes / 60)
         const endMins = endMinutes % 60
         const endTime = `${date}T${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}:00`
 
-        // 3. Create Appointment (online type)
+        // Create appointment
         const { error } = await supabase.from('appointments').insert({
             doctor_id: doctorId,
             patient_id: patientId,
@@ -306,14 +343,22 @@ export async function submitBooking(formData: {
             clinic_id: clinicId
         })
 
-        if (error) throw error
+        if (error) {
+            // Handle unique constraint violation (concurrent booking)
+            if (error.code === '23505') {
+                return { error: 'This time slot was just booked. Please select a different time.' }
+            }
+            throw error
+        }
 
         revalidatePath('/doctor/appointments')
         revalidatePath('/doctor/dashboard')
+        revalidatePath('/assistant/dashboard')
+        revalidatePath('/assistant/appointments')
         return { success: true }
 
     } catch (error: any) {
         console.error('Booking error:', error)
-        return { error: error.message || 'Failed to book appointment' }
+        return { error: error.message || 'Failed to book appointment. Please try again.' }
     }
 }

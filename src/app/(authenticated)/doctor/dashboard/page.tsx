@@ -12,7 +12,7 @@ export default async function DoctorDashboard() {
     const clinicId = profile.clinic_id!
     const supabase = createAdminClient()
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata' }).format(new Date())
 
     const [{ data: appts }, { count: totalPatients }, { count: totalRx }] = await Promise.all([
         supabase
@@ -45,7 +45,7 @@ export default async function DoctorDashboard() {
         patient: Array.isArray(a.patients) ? a.patients[0]?.full_name : (a.patients as any)?.full_name || 'Unknown',
         phone: Array.isArray(a.patients) ? a.patients[0]?.phone : (a.patients as any)?.phone || null,
         startTime: a.start_time,
-        time: new Date(a.start_time).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' }),
+        time: new Date(a.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' }),
         type: 'Consultation',
         status: a.status,
         img: (Array.isArray(a.patients) ? a.patients[0]?.full_name : (a.patients as any)?.full_name || 'U').split(' ').map((n: any) => n[0]).join('').slice(0, 2)
@@ -76,10 +76,10 @@ export default async function DoctorDashboard() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                <StatCard label="Today's Appts" value={todayCount} icon={Calendar} color="text-blue-500" bg="bg-blue-50" />
-                <StatCard label="Pending Check-ins" value={pendingCount} icon={User} color="text-emerald-500" bg="bg-emerald-50" />
-                <StatCard label="Total Patients" value={totalPatients ?? 0} icon={User} color="text-violet-500" bg="bg-violet-50" />
-                <StatCard label="Prescriptions" value={totalRx ?? 0} icon={FileText} color="text-amber-500" bg="bg-amber-50" />
+                <StatCard label="Today's Appts" value={todayCount} icon={Calendar} color="text-blue-500" bg="bg-blue-50" href="/doctor/appointments" />
+                <StatCard label="Pending Check-ins" value={pendingCount} icon={User} color="text-emerald-500" bg="bg-emerald-50" href="/doctor/appointments" />
+                <StatCard label="Total Patients" value={totalPatients ?? 0} icon={User} color="text-violet-500" bg="bg-violet-50" href="/doctor/patients" />
+                <StatCard label="Prescriptions" value={totalRx ?? 0} icon={FileText} color="text-amber-500" bg="bg-amber-50" href="/doctor/prescriptions" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -126,11 +126,11 @@ export default async function DoctorDashboard() {
     )
 }
 
-function StatCard({ label, value, icon: Icon, color, bg }: {
-    label: string; value: number; icon: any; color: string; bg: string
+function StatCard({ label, value, icon: Icon, color, bg, href }: {
+    label: string; value: number; icon: any; color: string; bg: string; href?: string
 }) {
-    return (
-        <div className="card p-3 sm:p-5 flex items-start justify-between">
+    const content = (
+        <>
             <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-slate-500 mb-1 truncate">{label}</p>
                 <p className="text-2xl sm:text-3xl font-bold text-slate-900">{value}</p>
@@ -139,6 +139,18 @@ function StatCard({ label, value, icon: Icon, color, bg }: {
                 <Icon size={20} className="sm:hidden" />
                 <Icon size={24} className="hidden sm:block" />
             </div>
+        </>
+    )
+    if (href) {
+        return (
+            <Link href={href} className="card card-hover p-3 sm:p-5 flex items-start justify-between">
+                {content}
+            </Link>
+        )
+    }
+    return (
+        <div className="card p-3 sm:p-5 flex items-start justify-between">
+            {content}
         </div>
     )
 }

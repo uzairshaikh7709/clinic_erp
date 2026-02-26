@@ -7,19 +7,17 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import type { UserProfile } from '@/types/database'
 
 // Cached helper to get current user profile safely.
-// Uses getSession() (reads JWT from cookie locally, no network call) instead of
-// getUser() (which makes a round-trip to Supabase auth servers on every request).
-// The middleware already handles token refresh via getSession().
+// Uses getUser() which verifies the JWT with Supabase Auth servers.
 export const getUserProfile = cache(async (): Promise<UserProfile | null> => {
     const supabase = await createClient()
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session?.user) return null
+    if (!user) return null
 
     const admin = createAdminClient()
 
     // Fetch profile + role-specific ID in parallel
-    const userId = session.user.id
+    const userId = user.id
     const { data: profile } = await admin
         .from('profiles')
         .select('*')

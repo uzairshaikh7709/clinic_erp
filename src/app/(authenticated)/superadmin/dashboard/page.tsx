@@ -44,10 +44,10 @@ export default async function SuperAdminDashboard() {
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-                <StatCard label="Organizations" value={orgCount ?? 0} sub={`${activeOrgCount ?? 0} active`} icon={Building2} color="text-emerald-500" bg="bg-emerald-50" />
-                <StatCard label="Total Users" value={userCount ?? 0} icon={Users} color="text-blue-500" bg="bg-blue-50" />
-                <StatCard label="Doctors" value={doctorCount ?? 0} icon={Stethoscope} color="text-violet-500" bg="bg-violet-50" />
-                <StatCard label="Messages" value={contactCount ?? 0} icon={Mail} color="text-amber-500" bg="bg-amber-50" />
+                <StatCard label="Organizations" value={orgCount ?? 0} sub={`${activeOrgCount ?? 0} active`} icon={Building2} color="text-emerald-500" bg="bg-emerald-50" href="/superadmin/organizations" />
+                <StatCard label="Total Users" value={userCount ?? 0} icon={Users} color="text-blue-500" bg="bg-blue-50" href="/superadmin/users" />
+                <StatCard label="Doctors" value={doctorCount ?? 0} icon={Stethoscope} color="text-violet-500" bg="bg-violet-50" href="/superadmin/users" />
+                <StatCard label="Messages" value={contactCount ?? 0} icon={Mail} color="text-amber-500" bg="bg-amber-50" href="/superadmin/contacts" />
             </div>
 
             {/* Quick Actions */}
@@ -163,11 +163,11 @@ export default async function SuperAdminDashboard() {
     )
 }
 
-function StatCard({ label, value, sub, icon: Icon, color, bg, isText }: {
-    label: string; value: number | string; sub?: string; icon: any; color: string; bg: string; isText?: boolean
+function StatCard({ label, value, sub, icon: Icon, color, bg, isText, href }: {
+    label: string; value: number | string; sub?: string; icon: any; color: string; bg: string; isText?: boolean; href?: string
 }) {
-    return (
-        <div className="card p-3 sm:p-5 flex items-start justify-between">
+    const content = (
+        <>
             <div className="min-w-0">
                 <p className="text-xs sm:text-sm font-medium text-slate-500 mb-1 truncate">{label}</p>
                 <p className={`${isText ? 'text-lg sm:text-xl' : 'text-2xl sm:text-3xl'} font-bold text-slate-900`}>{value}</p>
@@ -177,6 +177,18 @@ function StatCard({ label, value, sub, icon: Icon, color, bg, isText }: {
                 <Icon size={20} className="sm:hidden" />
                 <Icon size={24} className="hidden sm:block" />
             </div>
+        </>
+    )
+    if (href) {
+        return (
+            <Link href={href} className="card card-hover p-3 sm:p-5 flex items-start justify-between">
+                {content}
+            </Link>
+        )
+    }
+    return (
+        <div className="card p-3 sm:p-5 flex items-start justify-between">
+            {content}
         </div>
     )
 }
