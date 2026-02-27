@@ -14,8 +14,12 @@ export async function createOrganization(formData: FormData) {
     const phone = formData.get('phone') as string
     const email = formData.get('email') as string
     const ownerProfileId = formData.get('owner_profile_id') as string
+    const orgType = (formData.get('org_type') as string) || 'clinic'
 
     if (!name || !slug) return { error: 'Name and slug are required' }
+    if (!['clinic', 'pharmacy'].includes(orgType)) return { error: 'Invalid organization type' }
+
+    const isPharmacyOrg = orgType === 'pharmacy'
 
     try {
         const { data: org, error: orgError } = await admin
@@ -26,16 +30,26 @@ export async function createOrganization(formData: FormData) {
                 address: address || null,
                 phone: phone || null,
                 email: email || null,
-                owner_profile_id: ownerProfileId || null,
-                is_active: true
+                owner_profile_id: isPharmacyOrg ? null : (ownerProfileId || null),
+                is_active: true,
+                org_type: orgType,
+                pharmacy_enabled: isPharmacyOrg ? true : false,
             })
             .select()
             .single()
 
         if (orgError) throw orgError
 
-        // Assign owner to this org if specified
-        if (ownerProfileId) {
+        // Auto-create pharmacies config row for pharmacy-only orgs
+        if (isPharmacyOrg) {
+            await admin.from('pharmacies').insert({
+                organization_id: org.id,
+                name: name + ' Pharmacy',
+            })
+        }
+
+        // Assign owner to this org if specified (clinic orgs only)
+        if (!isPharmacyOrg && ownerProfileId) {
             await admin
                 .from('profiles')
                 .update({ clinic_id: org.id })

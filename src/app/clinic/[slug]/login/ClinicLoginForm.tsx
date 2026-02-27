@@ -6,7 +6,8 @@ import { Loader2, ArrowRight, ArrowLeft, CheckCircle, Building2 } from 'lucide-r
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-function LoginFormInner({ clinicName, clinicSlug, logoUrl }: { clinicName: string; clinicSlug: string; logoUrl: string | null }) {
+function LoginFormInner({ clinicName, clinicSlug, logoUrl, orgType = 'clinic' }: { clinicName: string; clinicSlug: string; logoUrl: string | null; orgType?: string }) {
+    const portalPrefix = orgType === 'pharmacy' ? 'pharmacy' : 'clinic'
     const searchParams = useSearchParams()
     const errorMsg = searchParams.get('error')
     const resetSuccess = searchParams.get('reset') === 'success'
@@ -50,7 +51,7 @@ function LoginFormInner({ clinicName, clinicSlug, logoUrl }: { clinicName: strin
 
                 {/* Clinic Logo Header */}
                 <div className="text-center mb-8">
-                    <Link href={`/clinic/${clinicSlug}`} className="inline-flex items-center gap-2.5 mb-2">
+                    <Link href={`/${portalPrefix}/${clinicSlug}`} className="inline-flex items-center gap-2.5 mb-2">
                         {logoUrl ? (
                             <img src={logoUrl} alt={clinicName} className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-blue-500/20" />
                         ) : (
@@ -202,7 +203,7 @@ function LoginFormInner({ clinicName, clinicSlug, logoUrl }: { clinicName: strin
                 </div>
 
                 <div className="text-center mt-6">
-                    <Link href={`/clinic/${clinicSlug}`} className="text-sm text-slate-500 hover:text-slate-700 flex items-center justify-center gap-1">
+                    <Link href={`/${portalPrefix}/${clinicSlug}`} className="text-sm text-slate-500 hover:text-slate-700 flex items-center justify-center gap-1">
                         <ArrowRight size={14} className="rotate-180" /> Back to {clinicName}
                     </Link>
                 </div>
@@ -212,10 +213,10 @@ function LoginFormInner({ clinicName, clinicSlug, logoUrl }: { clinicName: strin
     )
 }
 
-export default function ClinicLoginForm({ clinicName, clinicSlug, logoUrl }: { clinicName: string; clinicSlug: string; logoUrl: string | null }) {
+export default function ClinicLoginForm({ clinicName, clinicSlug, logoUrl, orgType = 'clinic' }: { clinicName: string; clinicSlug: string; logoUrl: string | null; orgType?: string }) {
     return (
         <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#F0F4F8]"><Loader2 className="animate-spin text-slate-400" /></div>}>
-            <LoginFormInner clinicName={clinicName} clinicSlug={clinicSlug} logoUrl={logoUrl} />
+            <LoginFormInner clinicName={clinicName} clinicSlug={clinicSlug} logoUrl={logoUrl} orgType={orgType} />
         </Suspense>
     )
 }

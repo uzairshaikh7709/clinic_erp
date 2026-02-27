@@ -1,6 +1,6 @@
 'use client'
 
-import { LayoutDashboard, Calendar, Users, FileText, Activity, Clock, Building2, UserCog, Mail, Globe, Award, Settings } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, FileText, Activity, Clock, Building2, UserCog, Mail, Globe, Award, Settings, Pill, Package, AlertTriangle, Receipt, BarChart3 } from 'lucide-react'
 import { SignOutButton } from '@/components/SignOutButton'
 import { NavItem } from '@/components/NavItem'
 
@@ -43,13 +43,39 @@ export function Sidebar({ role, profile }: SidebarProps) {
                         <NavItem href="/doctor/team" icon={UserCog} label={profile?.is_clinic_owner ? 'Team' : 'My Staff'} />
                         <NavItem href="/doctor/clinic" icon={Globe} label="Clinic" />
                         <NavItem href="/doctor/settings" icon={Settings} label="Settings" />
+                        {profile?.is_clinic_owner && profile?.pharmacy_enabled && (
+                            <>
+                                <div className="pt-3 pb-1">
+                                    <p className="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Pharmacy</p>
+                                </div>
+                                <NavItem href="/pharmacy/dashboard" icon={LayoutDashboard} label="Dashboard" />
+                                <NavItem href="/pharmacy/medicines" icon={Package} label="Medicines" />
+                                <NavItem href="/pharmacy/dispense" icon={FileText} label="Dispense" />
+                                <NavItem href="/pharmacy/invoices" icon={Receipt} label="Invoices" />
+                                <NavItem href="/pharmacy/low-stock" icon={AlertTriangle} label="Low Stock" />
+                                <NavItem href="/pharmacy/stats" icon={BarChart3} label="Stats & Reports" />
+                            </>
+                        )}
                     </>
                 )}
 
-                {role === 'assistant' && (
+                {role === 'assistant' && profile?.org_type !== 'pharmacy' && (
                     <>
                         <NavItem href="/assistant/appointments" icon={Calendar} label="Schedule" />
                         <NavItem href="/assistant/patients" icon={Users} label="Patient Registry" />
+                    </>
+                )}
+
+                {role === 'assistant' && profile?.pharmacy_enabled && (
+                    <>
+                        <div className="pt-3 pb-1">
+                            <p className="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Pharmacy</p>
+                        </div>
+                        <NavItem href="/pharmacy/dashboard" icon={LayoutDashboard} label="Dashboard" />
+                        <NavItem href="/pharmacy/medicines" icon={Package} label="Medicines" />
+                        <NavItem href="/pharmacy/dispense" icon={FileText} label="Dispense" />
+                        <NavItem href="/pharmacy/invoices" icon={Receipt} label="Invoices" />
+                        <NavItem href="/pharmacy/low-stock" icon={AlertTriangle} label="Low Stock" />
                     </>
                 )}
 

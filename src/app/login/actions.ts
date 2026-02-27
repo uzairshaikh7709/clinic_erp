@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
@@ -21,8 +22,16 @@ export async function forgotPassword(formData: FormData) {
 
     const supabase = await createClient()
 
+    // Derive site URL from request headers so it works in both dev and production
+    const headersList = await headers()
+    const referer = headersList.get('referer')
+    const origin = headersList.get('origin')
+        || (referer ? new URL(referer).origin : null)
+        || process.env.NEXT_PUBLIC_SITE_URL
+        || 'http://localhost:3000'
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback?next=/reset-password`,
+        redirectTo: `${origin}/auth/callback?next=/reset-password`,
     })
 
     if (error) {
@@ -81,36 +90,41 @@ export async function login(formData: FormData) {
     if (!isClinicLogin && profile.clinic_id && (role === 'doctor' || role === 'assistant')) {
         const { data: org } = await adminClient
             .from('organizations')
-            .select('slug, name')
+            .select('slug, name, org_type')
             .eq('id', profile.clinic_id)
             .single()
 
         await supabase.auth.signOut()
 
         if (org?.slug) {
-            return { error: `Please login through your clinic portal: /clinic/${org.slug}/login` }
+            const portalLabel = org.org_type === 'pharmacy' ? 'pharmacy' : 'clinic'
+            const urlPrefix = org.org_type === 'pharmacy' ? 'pharmacy' : 'clinic'
+            return { error: `Please login through your ${portalLabel} portal: /${urlPrefix}/${org.slug}/login` }
         }
-        return { error: 'Please login through your clinic\'s login page.' }
+        return { error: 'Please login through your organization\'s login page.' }
     }
 
-    // 3. Sync Role + Clinic + Slug to Metadata if missing (Fixes existing users)
+    // 3. Sync Role + Clinic + Slug + OrgType to Metadata if missing (Fixes existing users)
     let clinicSlug = user.user_metadata?.clinic_slug || null
+    let orgType = user.user_metadata?.org_type || null
     const needsSync = user.user_metadata?.role !== role
         || user.user_metadata?.clinic_id !== profile.clinic_id
         || (!clinicSlug && profile.clinic_id)
+        || (!orgType && profile.clinic_id)
 
     if (needsSync) {
-        // Fetch org slug if we have a clinic_id but no slug cached yet
-        if (profile.clinic_id && !clinicSlug) {
+        // Fetch org slug + type if we have a clinic_id but missing metadata
+        if (profile.clinic_id && (!clinicSlug || !orgType)) {
             const { data: org } = await adminClient
                 .from('organizations')
-                .select('slug')
+                .select('slug, org_type')
                 .eq('id', profile.clinic_id)
                 .single()
             clinicSlug = org?.slug || null
+            orgType = org?.org_type || 'clinic'
         }
         await adminClient.auth.admin.updateUserById(user.id, {
-            user_metadata: { ...user.user_metadata, role, clinic_id: profile.clinic_id, clinic_slug: clinicSlug }
+            user_metadata: { ...user.user_metadata, role, clinic_id: profile.clinic_id, clinic_slug: clinicSlug, org_type: orgType }
         })
         // Refresh session so the JWT cookie gets the updated metadata
         await supabase.auth.refreshSession()

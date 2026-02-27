@@ -200,7 +200,7 @@ export default function AppointmentList({ appointments }: { appointments: any[] 
                             <div className="flex items-center justify-between text-xs text-slate-500">
                                 <span className="flex items-center gap-1">
                                     <Clock size={13} />
-                                    {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} &middot; {new Date(apt.start_time).toLocaleDateString()}
+                                    {new Date(apt.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} &middot; {new Date(apt.start_time).toLocaleDateString('en-IN')}
                                 </span>
                                 <AppointmentTypeBadge type={apt.appointment_type} />
                             </div>
@@ -256,10 +256,10 @@ export default function AppointmentList({ appointments }: { appointments: any[] 
                                         <td className={`px-4 lg:px-6 py-3 font-medium text-slate-700 whitespace-nowrap${visitedIds.has(apt.id) ? ' border-l-4 border-[#0077B6]' : ''}`}>
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-slate-900">
-                                                    {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
+                                                    {new Date(apt.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
                                                 <span className="text-xs text-slate-400">
-                                                    {new Date(apt.start_time).toLocaleDateString()}
+                                                    {new Date(apt.start_time).toLocaleDateString('en-IN')}
                                                 </span>
                                             </div>
                                         </td>

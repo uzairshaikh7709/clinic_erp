@@ -46,7 +46,7 @@ export default async function ContactSubmissionsPage() {
                             <p className="text-sm text-slate-600 whitespace-pre-wrap">{msg.message}</p>
                             <div className="flex items-center gap-1 text-[11px] text-slate-400">
                                 <Clock size={11} />
-                                {new Date(msg.created_at).toLocaleString()}
+                                {new Date(msg.created_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
                             </div>
                         </div>
                     ))
@@ -90,8 +90,8 @@ export default async function ContactSubmissionsPage() {
                                             <p className="truncate">{msg.message}</p>
                                         </td>
                                         <td className="px-4 lg:px-6 py-3 text-slate-500 whitespace-nowrap text-xs">
-                                            {new Date(msg.created_at).toLocaleDateString()}<br />
-                                            <span className="text-slate-400">{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                            {new Date(msg.created_at).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' })}<br />
+                                            <span className="text-slate-400">{new Date(msg.created_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })}</span>
                                         </td>
                                         <td className="px-4 lg:px-6 py-3 text-right">
                                             <div className="flex items-center justify-end gap-2">

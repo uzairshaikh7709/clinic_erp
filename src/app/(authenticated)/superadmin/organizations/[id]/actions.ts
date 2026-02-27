@@ -119,6 +119,37 @@ export async function deleteOrganization(orgId: string) {
     }
 }
 
+export async function togglePharmacyEnabled(orgId: string, enabled: boolean) {
+    await requireRole(['superadmin'])
+    const admin = createAdminClient()
+
+    const { error } = await admin
+        .from('organizations')
+        .update({ pharmacy_enabled: enabled, updated_at: new Date().toISOString() })
+        .eq('id', orgId)
+
+    if (error) return { error: error.message }
+
+    // Auto-create pharmacies config row on first enable
+    if (enabled) {
+        const { data: existing } = await admin
+            .from('pharmacies')
+            .select('id')
+            .eq('organization_id', orgId)
+            .single()
+
+        if (!existing) {
+            await admin.from('pharmacies').insert({
+                organization_id: orgId,
+                name: 'In-House Pharmacy',
+            })
+        }
+    }
+
+    revalidatePath(`/superadmin/organizations/${orgId}`)
+    return { success: true }
+}
+
 export async function createUserForOrg(formData: FormData) {
     await requireRole(['superadmin'])
     const admin = createAdminClient()

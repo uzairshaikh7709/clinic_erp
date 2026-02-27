@@ -1,6 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Known authenticated pharmacy sub-routes (not public landing pages)
+const PHARMACY_AUTH_ROUTES = ['dashboard', 'medicines', 'dispense', 'invoices', 'low-stock', 'batches', 'movements', 'audit', 'stats']
+
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
         request,
@@ -30,16 +33,23 @@ export async function updateSession(request: NextRequest) {
 
     const path = request.nextUrl.pathname
 
+    // Check if this is a public pharmacy page (/pharmacy/[slug] or /pharmacy/[slug]/login)
+    // but NOT an authenticated route like /pharmacy/dashboard, /pharmacy/medicines, etc.
+    const pharmacySegment = path.startsWith('/pharmacy/') ? path.split('/')[2] : null
+    const isPublicPharmacy = pharmacySegment && !PHARMACY_AUTH_ROUTES.includes(pharmacySegment)
+
     // Public Routes
     if (path === '/' || path.startsWith('/login') || path.startsWith('/auth') || path.startsWith('/book-online')
         || path.startsWith('/clinic') || path.startsWith('/privacy-policy') || path.startsWith('/terms')
-        || path.startsWith('/contact') || path.startsWith('/reset-password')) {
+        || path.startsWith('/contact') || path.startsWith('/reset-password') || isPublicPharmacy) {
         // Redirect logged-in users away from login pages (and homepage for org staff)
         // Skip redirect if there's an error param (prevents loop when JWT metadata is stale)
         if (user && !request.nextUrl.searchParams.has('error')) {
             const role = user.user_metadata.role
             const isOrgStaff = user.user_metadata.clinic_id && (role === 'doctor' || role === 'assistant')
-            const isLoginPage = path === '/login' || /^\/clinic\/[^/]+\/login$/.test(path)
+            const isLoginPage = path === '/login'
+                || /^\/clinic\/[^/]+\/login$/.test(path)
+                || /^\/pharmacy\/[^/]+\/login$/.test(path)
 
             // Org staff should not access the main site homepage or login pages
             if (isLoginPage || (path === '/' && isOrgStaff)) {
@@ -56,7 +66,8 @@ export async function updateSession(request: NextRequest) {
         const meta = u?.user_metadata
         const slug = meta?.clinic_slug
         if (slug && (meta?.role === 'doctor' || meta?.role === 'assistant')) {
-            const base = `/clinic/${slug}/login`
+            const prefix = meta?.org_type === 'pharmacy' ? 'pharmacy' : 'clinic'
+            const base = `/${prefix}/${slug}/login`
             return error ? `${base}?error=${error}` : base
         }
         return error ? `/login?error=${error}` : '/login'

@@ -78,7 +78,7 @@ export default async function AssistantAppointmentsPage() {
                             <div className="flex items-center justify-between flex-wrap gap-2">
                                 <span className="flex items-center gap-1 text-xs text-slate-500">
                                     <Clock size={13} />
-                                    {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} &middot; {new Date(apt.start_time).toLocaleDateString()}
+                                    {new Date(apt.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })} &middot; {new Date(apt.start_time).toLocaleDateString('en-IN', { timeZone: 'UTC' })}
                                 </span>
                                 <AppointmentTypeBadge type={apt.appointment_type} />
                                 {apt.patients?.phone && (
@@ -122,8 +122,8 @@ export default async function AssistantAppointmentsPage() {
                                 (appointments || []).map((apt: any) => (
                                     <tr key={apt.id} className="hover:bg-slate-50 transition-colors">
                                         <td className="px-4 lg:px-6 py-3 font-bold text-slate-800">
-                                            {new Date(apt.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
-                                            <div className="text-xs font-normal text-slate-400">{new Date(apt.start_time).toLocaleDateString()}</div>
+                                            {new Date(apt.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })}
+                                            <div className="text-xs font-normal text-slate-400">{new Date(apt.start_time).toLocaleDateString('en-IN', { timeZone: 'UTC' })}</div>
                                         </td>
                                         <td className="px-4 lg:px-6 py-3">
                                             <div className="font-semibold text-slate-900">{apt.patients?.full_name}</div>

@@ -2,7 +2,8 @@ import { createAdminClient } from '@/utils/supabase/admin'
 import { sanitizeHtml } from '@/utils/sanitize-html'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Building2, Calendar, LogIn, MapPin, Phone, Mail, CheckCircle, Clock, ArrowRight, Star, Users, Stethoscope, Shield } from 'lucide-react'
+import { redirect } from 'next/navigation'
+import { Building2, Calendar, LogIn, MapPin, Phone, Mail, CheckCircle, Clock, ArrowRight, Star, Stethoscope, Shield } from 'lucide-react'
 import type { Metadata } from 'next'
 import type { ClinicPageData } from '@/types/database'
 
@@ -13,12 +14,15 @@ async function getClinicData(slug: string) {
 
     const { data: org } = await admin
         .from('organizations')
-        .select('id, name, slug, address, phone, email, logo_url, page_data')
+        .select('id, name, slug, address, phone, email, logo_url, page_data, org_type')
         .eq('slug', slug)
         .eq('is_active', true)
         .single()
 
     if (!org) return null
+
+    // Pharmacy orgs use /pharmacy/[slug] instead
+    if (org.org_type === 'pharmacy') return { redirect: `/pharmacy/${slug}` as const }
 
     const { data: doctors } = await admin
         .from('doctors')
@@ -37,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const { slug } = await params
     const data = await getClinicData(slug)
 
-    if (!data) return { title: 'Clinic Not Found' }
+    if (!data || 'redirect' in data) return { title: 'Clinic Not Found' }
 
     const { org } = data
     const pageData = (org.page_data || {}) as ClinicPageData
@@ -71,6 +75,8 @@ export default async function ClinicLandingPage({ params }: { params: Promise<{ 
             </div>
         )
     }
+
+    if ('redirect' in data) redirect(data.redirect as string)
 
     const { org, doctors } = data
     const pd = (org.page_data || {}) as ClinicPageData

@@ -42,17 +42,21 @@ function CopyableLink({ label, icon: Icon, path }: { label: string; icon: any; p
     )
 }
 
-export default function ClinicLinksCard({ slug }: { slug: string }) {
+export default function ClinicLinksCard({ slug, orgType = 'clinic' }: { slug: string; orgType?: string }) {
+    const isPharmacy = orgType === 'pharmacy'
+    const prefix = isPharmacy ? 'pharmacy' : 'clinic'
+    const label = isPharmacy ? 'Pharmacy' : 'Clinic'
+
     return (
         <div className="card">
             <div className="p-5 border-b border-slate-100 flex items-center gap-2">
                 <Globe size={18} className="text-slate-400" />
-                <h2 className="font-bold text-slate-800">Clinic Portal Links</h2>
+                <h2 className="font-bold text-slate-800">{label} Portal Links</h2>
             </div>
             <div className="p-5 space-y-4">
-                <p className="text-sm text-slate-500">Share these links with clinic staff. The portal page shows the clinic&apos;s own branding — no DrEase mentioned.</p>
-                <CopyableLink label="Clinic Portal" icon={Globe} path={`/clinic/${slug}`} />
-                <CopyableLink label="Staff Login" icon={LogIn} path={`/clinic/${slug}/login`} />
+                <p className="text-sm text-slate-500">Share these links with staff. The portal page shows your own branding — no DrEase mentioned.</p>
+                {!isPharmacy && <CopyableLink label={`${label} Portal`} icon={Globe} path={`/${prefix}/${slug}`} />}
+                <CopyableLink label="Staff Login" icon={LogIn} path={`/${prefix}/${slug}/login`} />
             </div>
         </div>
     )

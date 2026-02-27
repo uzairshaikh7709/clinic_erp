@@ -1,6 +1,7 @@
 import { requireRole } from '@/utils/auth'
 import { createAdminClient } from '@/utils/supabase/admin'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Calendar, User, Phone, Clock, Users, ChevronRight } from 'lucide-react'
 import RealtimeRefresher from '@/components/RealtimeRefresher'
 
@@ -8,6 +9,12 @@ export const dynamic = 'force-dynamic'
 
 export default async function AssistantDashboard() {
     const profile = await requireRole(['assistant'])
+
+    // Pharmacy-only orgs: redirect to pharmacy dashboard
+    if (profile.org_type === 'pharmacy') {
+        redirect('/pharmacy/dashboard')
+    }
+
     const clinicId = profile.clinic_id
     const admin = createAdminClient()
 
@@ -105,7 +112,7 @@ export default async function AssistantDashboard() {
                                         <div className="min-w-0">
                                             <p className="font-bold text-slate-800 text-sm sm:text-base truncate">{apt.patients?.full_name}</p>
                                             <p className="text-xs text-slate-500">
-                                                {new Date(apt.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' })}
+                                                {new Date(apt.start_time).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' })}
                                             </p>
                                         </div>
                                     </div>

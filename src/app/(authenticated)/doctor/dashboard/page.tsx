@@ -45,7 +45,7 @@ export default async function DoctorDashboard() {
         patient: Array.isArray(a.patients) ? a.patients[0]?.full_name : (a.patients as any)?.full_name || 'Unknown',
         phone: Array.isArray(a.patients) ? a.patients[0]?.phone : (a.patients as any)?.phone || null,
         startTime: a.start_time,
-        time: new Date(a.start_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' }),
+        time: new Date(a.start_time).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'UTC' }),
         type: 'Consultation',
         status: a.status,
         img: (Array.isArray(a.patients) ? a.patients[0]?.full_name : (a.patients as any)?.full_name || 'U').split(' ').map((n: any) => n[0]).join('').slice(0, 2)

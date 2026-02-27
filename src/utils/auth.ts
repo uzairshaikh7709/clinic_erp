@@ -33,6 +33,9 @@ export const getUserProfile = cache(async (): Promise<UserProfile | null> => {
     let is_clinic_owner = false
     let clinic_name: string | null = null
 
+    let pharmacy_enabled = false
+    let org_type: 'clinic' | 'pharmacy' = 'clinic'
+
     if (profile.role === 'doctor') {
         // Fire doctor lookup + ownership check + clinic name in parallel
         const [doctorResult, ownershipResult, clinicResult] = await Promise.all([
@@ -41,25 +44,29 @@ export const getUserProfile = cache(async (): Promise<UserProfile | null> => {
                 ? admin.from('organizations').select('id').eq('id', profile.clinic_id).eq('owner_profile_id', userId).single()
                 : Promise.resolve({ data: null }),
             profile.clinic_id
-                ? admin.from('organizations').select('name').eq('id', profile.clinic_id).single()
+                ? admin.from('organizations').select('name, pharmacy_enabled, org_type').eq('id', profile.clinic_id).single()
                 : Promise.resolve({ data: null })
         ])
         doctor_id = doctorResult.data?.id ?? null
         is_clinic_owner = !!ownershipResult.data
         clinic_name = clinicResult.data?.name ?? null
+        pharmacy_enabled = clinicResult.data?.pharmacy_enabled ?? false
+        org_type = clinicResult.data?.org_type ?? 'clinic'
     } else if (profile.role === 'assistant') {
         const [assistantResult, clinicResult] = await Promise.all([
             admin.from('assistants').select('id, assigned_doctor_id').eq('profile_id', userId).single(),
             profile.clinic_id
-                ? admin.from('organizations').select('name').eq('id', profile.clinic_id).single()
+                ? admin.from('organizations').select('name, pharmacy_enabled, org_type').eq('id', profile.clinic_id).single()
                 : Promise.resolve({ data: null })
         ])
         assistant_id = assistantResult.data?.id ?? null
         assigned_doctor_id = assistantResult.data?.assigned_doctor_id ?? null
         clinic_name = clinicResult.data?.name ?? null
+        pharmacy_enabled = clinicResult.data?.pharmacy_enabled ?? false
+        org_type = clinicResult.data?.org_type ?? 'clinic'
     }
 
-    return { ...profile, doctor_id, assistant_id, assigned_doctor_id, is_clinic_owner, clinic_name }
+    return { ...profile, doctor_id, assistant_id, assigned_doctor_id, is_clinic_owner, clinic_name, pharmacy_enabled, org_type }
 })
 
 export async function requireRole(allowedRoles: ('superadmin' | 'doctor' | 'assistant')[]) {
@@ -99,6 +106,15 @@ export async function requireClinicOwner(): Promise<UserProfile & { clinic_id: s
     const profile = await getUserProfile()
     if (!profile || !profile.is_clinic_owner || !profile.clinic_id) {
         redirect('/login?error=unauthorized')
+    }
+    return profile as UserProfile & { clinic_id: string }
+}
+
+// Require owner doctor with pharmacy enabled — for read-only pharmacy stats page.
+export async function requirePharmacyStatsAccess(): Promise<UserProfile & { clinic_id: string }> {
+    const profile = await getUserProfile()
+    if (!profile || profile.role !== 'doctor' || !profile.is_clinic_owner || !profile.clinic_id || !profile.pharmacy_enabled) {
+        redirect('/doctor/dashboard')
     }
     return profile as UserProfile & { clinic_id: string }
 }

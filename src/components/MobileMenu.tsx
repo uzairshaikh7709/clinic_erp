@@ -5,7 +5,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
     Menu, X, LayoutDashboard, Calendar, Users, FileText,
-    Clock, Building2, UserCog, LogOut, LucideIcon, Mail, Globe, Award, Settings
+    Clock, Building2, UserCog, LogOut, LucideIcon, Mail, Globe, Award, Settings,
+    Pill, Package, AlertTriangle, Receipt, BarChart3
 } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 
@@ -118,13 +119,39 @@ export function MobileMenu({ role, profile }: { role: string; profile: any }) {
                                     <MobileNavItem href="/doctor/team" icon={UserCog} label={profile?.is_clinic_owner ? 'Team' : 'My Staff'} onClick={close} />
                                     <MobileNavItem href="/doctor/clinic" icon={Globe} label="Clinic" onClick={close} />
                                     <MobileNavItem href="/doctor/settings" icon={Settings} label="Settings" onClick={close} />
+                                    {profile?.is_clinic_owner && profile?.pharmacy_enabled && (
+                                        <>
+                                            <div className="pt-3 pb-1">
+                                                <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Pharmacy</p>
+                                            </div>
+                                            <MobileNavItem href="/pharmacy/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={close} />
+                                            <MobileNavItem href="/pharmacy/medicines" icon={Package} label="Medicines" onClick={close} />
+                                            <MobileNavItem href="/pharmacy/dispense" icon={FileText} label="Dispense" onClick={close} />
+                                            <MobileNavItem href="/pharmacy/invoices" icon={Receipt} label="Invoices" onClick={close} />
+                                            <MobileNavItem href="/pharmacy/low-stock" icon={AlertTriangle} label="Low Stock" onClick={close} />
+                                            <MobileNavItem href="/pharmacy/stats" icon={BarChart3} label="Stats & Reports" onClick={close} />
+                                        </>
+                                    )}
                                 </>
                             )}
 
-                            {role === 'assistant' && (
+                            {role === 'assistant' && profile?.org_type !== 'pharmacy' && (
                                 <>
                                     <MobileNavItem href="/assistant/appointments" icon={Calendar} label="Schedule" onClick={close} />
                                     <MobileNavItem href="/assistant/patients" icon={Users} label="Patient Registry" onClick={close} />
+                                </>
+                            )}
+
+                            {role === 'assistant' && profile?.pharmacy_enabled && (
+                                <>
+                                    <div className="pt-3 pb-1">
+                                        <p className="px-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Pharmacy</p>
+                                    </div>
+                                    <MobileNavItem href="/pharmacy/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={close} />
+                                    <MobileNavItem href="/pharmacy/medicines" icon={Package} label="Medicines" onClick={close} />
+                                    <MobileNavItem href="/pharmacy/dispense" icon={FileText} label="Dispense" onClick={close} />
+                                    <MobileNavItem href="/pharmacy/invoices" icon={Receipt} label="Invoices" onClick={close} />
+                                    <MobileNavItem href="/pharmacy/low-stock" icon={AlertTriangle} label="Low Stock" onClick={close} />
                                 </>
                             )}
 

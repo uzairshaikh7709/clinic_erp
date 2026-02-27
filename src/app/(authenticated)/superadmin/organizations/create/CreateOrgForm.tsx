@@ -9,6 +9,7 @@ export default function CreateOrgForm({ doctors }: { doctors: any[] }) {
     const [message, setMessage] = useState('')
     const [error, setError] = useState('')
     const [name, setName] = useState('')
+    const [orgType, setOrgType] = useState<'clinic' | 'pharmacy'>('clinic')
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
@@ -43,7 +44,7 @@ export default function CreateOrgForm({ doctors }: { doctors: any[] }) {
                 </Link>
                 <div>
                     <h1 className="text-xl sm:text-2xl font-bold text-slate-800">Create New Organization</h1>
-                    <p className="text-slate-500 text-sm">Set up a new clinic or practice</p>
+                    <p className="text-slate-500 text-sm">Set up a new clinic or pharmacy</p>
                 </div>
             </div>
 
@@ -67,12 +68,31 @@ export default function CreateOrgForm({ doctors }: { doctors: any[] }) {
                 </div>
                 <div className="p-4 sm:p-6 space-y-4 sm:space-y-5">
                     <div>
+                        <label className="label">Organization Type</label>
+                        <div className="flex gap-3">
+                            <label className={`flex-1 flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${orgType === 'clinic' ? 'border-indigo-300 bg-indigo-50 ring-1 ring-indigo-200' : 'border-slate-200 hover:border-slate-300'}`}>
+                                <input type="radio" name="org_type" value="clinic" checked={orgType === 'clinic'} onChange={() => setOrgType('clinic')} className="accent-indigo-600" />
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">Clinic</p>
+                                    <p className="text-xs text-slate-500">Appointments, prescriptions, optional pharmacy</p>
+                                </div>
+                            </label>
+                            <label className={`flex-1 flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${orgType === 'pharmacy' ? 'border-indigo-300 bg-indigo-50 ring-1 ring-indigo-200' : 'border-slate-200 hover:border-slate-300'}`}>
+                                <input type="radio" name="org_type" value="pharmacy" checked={orgType === 'pharmacy'} onChange={() => setOrgType('pharmacy')} className="accent-indigo-600" />
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">Pharmacy</p>
+                                    <p className="text-xs text-slate-500">Pharmacy-only, no appointments or prescriptions</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
                         <label className="label">Organization Name</label>
                         <input
                             name="name"
                             required
                             className="input"
-                            placeholder="e.g. Downtown Ortho Clinic"
+                            placeholder={orgType === 'pharmacy' ? 'e.g. MedPlus Pharmacy' : 'e.g. Downtown Ortho Clinic'}
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                         />
@@ -103,17 +123,19 @@ export default function CreateOrgForm({ doctors }: { doctors: any[] }) {
                             <input name="email" type="email" className="input" placeholder="clinic@example.com" />
                         </div>
                     </div>
-                    <div>
-                        <label className="label">Owner (Doctor)</label>
-                        <select name="owner_profile_id" className="select">
-                            <option value="">No owner (assign later)</option>
-                            {doctors.map(d => (
-                                <option key={d.profile_id} value={d.profile_id}>
-                                    {d.profiles?.full_name} ({d.specialization})
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                    {orgType === 'clinic' && (
+                        <div>
+                            <label className="label">Owner (Doctor)</label>
+                            <select name="owner_profile_id" className="select">
+                                <option value="">No owner (assign later)</option>
+                                {doctors.map(d => (
+                                    <option key={d.profile_id} value={d.profile_id}>
+                                        {d.profiles?.full_name} ({d.specialization})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="pt-2">
                         <button disabled={loading} className="btn btn-primary w-full sm:w-auto min-w-[180px] justify-center">

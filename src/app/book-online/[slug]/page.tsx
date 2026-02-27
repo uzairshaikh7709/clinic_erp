@@ -10,7 +10,7 @@ async function getOrgBySlug(slug: string) {
     const admin = createAdminClient()
     const { data } = await admin
         .from('organizations')
-        .select('id, name, slug, address, phone, email, logo_url')
+        .select('id, name, slug, address, phone, email, logo_url, org_type')
         .eq('slug', slug)
         .eq('is_active', true)
         .single()
@@ -21,7 +21,7 @@ export default async function OrgBookingPage({ params }: { params: Promise<{ slu
     const { slug } = await params
     const org = await getOrgBySlug(slug)
 
-    if (!org) {
+    if (!org || org.org_type === 'pharmacy') {
         return (
             <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-4">
                 <Building2 size={48} className="text-slate-300 mb-4" />
