@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import { createAdminClient } from '@/utils/supabase/admin'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 export async function forgotPassword(formData: FormData) {
     const email = (formData.get('email') as string)?.trim()?.toLowerCase()
@@ -20,8 +21,6 @@ export async function forgotPassword(formData: FormData) {
 
     if (!profile) return { error: 'No account found with this email address' }
 
-    const supabase = await createClient()
-
     // Use NEXT_PUBLIC_SITE_URL (must be set in production), fall back to request headers
     const headersList = await headers()
     const referer = headersList.get('referer')
@@ -32,17 +31,17 @@ export async function forgotPassword(formData: FormData) {
 
     const redirectTo = `${origin}/auth/callback?next=/reset-password`
 
-    // Try with explicit redirect URL first
-    let result = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+    // Use a plain Supabase client (not cookie-based SSR) — resetPasswordForEmail
+    // is an unauthenticated operation that doesn't need cookies
+    const supabase = createSupabaseClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    )
 
-    // If redirect URL is rejected by Supabase, retry without it (uses Supabase Site URL setting)
-    if (result.error) {
-        console.error('Password reset attempt 1 failed:', result.error.message, '| redirectTo:', redirectTo)
-        result = await supabase.auth.resetPasswordForEmail(email)
-    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
 
-    if (result.error) {
-        console.error('Password reset failed:', result.error.message)
+    if (error) {
+        console.error('Password reset error:', error.message, '| redirectTo:', redirectTo)
         return { error: 'Failed to send reset email. Please try again.' }
     }
 
