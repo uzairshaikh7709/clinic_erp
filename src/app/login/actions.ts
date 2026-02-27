@@ -22,20 +22,27 @@ export async function forgotPassword(formData: FormData) {
 
     const supabase = await createClient()
 
-    // Derive site URL from request headers so it works in both dev and production
+    // Use NEXT_PUBLIC_SITE_URL (must be set in production), fall back to request headers
     const headersList = await headers()
     const referer = headersList.get('referer')
-    const origin = headersList.get('origin')
+    const origin = process.env.NEXT_PUBLIC_SITE_URL
+        || headersList.get('origin')
         || (referer ? new URL(referer).origin : null)
-        || process.env.NEXT_PUBLIC_SITE_URL
         || 'http://localhost:3000'
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${origin}/auth/callback?next=/reset-password`,
-    })
+    const redirectTo = `${origin}/auth/callback?next=/reset-password`
 
-    if (error) {
-        console.error('Password reset error:', error.message)
+    // Try with explicit redirect URL first
+    let result = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+
+    // If redirect URL is rejected by Supabase, retry without it (uses Supabase Site URL setting)
+    if (result.error) {
+        console.error('Password reset attempt 1 failed:', result.error.message, '| redirectTo:', redirectTo)
+        result = await supabase.auth.resetPasswordForEmail(email)
+    }
+
+    if (result.error) {
+        console.error('Password reset failed:', result.error.message)
         return { error: 'Failed to send reset email. Please try again.' }
     }
 
