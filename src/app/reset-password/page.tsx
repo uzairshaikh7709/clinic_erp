@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@/utils/supabase/client'
-import { Loader2, Lock, CheckCircle } from 'lucide-react'
+import { Loader2, Lock, CheckCircle, AlertCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -13,6 +13,37 @@ export default function ResetPasswordPage() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
+    const [ready, setReady] = useState(false)
+    const [sessionError, setSessionError] = useState(false)
+
+    // On mount, wait for Supabase to pick up the session from URL hash
+    useEffect(() => {
+        const supabase = createBrowserClient()
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+                setReady(true)
+            }
+        })
+
+        // Also check if session already exists (e.g., user came via callback route)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session) setReady(true)
+        })
+
+        // Timeout — if no session after 3 seconds, show error
+        const timeout = setTimeout(() => {
+            setReady((prev) => {
+                if (!prev) setSessionError(true)
+                return prev
+            })
+        }, 3000)
+
+        return () => {
+            subscription.unsubscribe()
+            clearTimeout(timeout)
+        }
+    }, [])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -76,6 +107,23 @@ export default function ResetPasswordPage() {
                                 <p className="text-sm text-slate-600">
                                     Your password has been updated successfully. Redirecting to login...
                                 </p>
+                            </div>
+                        ) : sessionError ? (
+                            <div className="text-center space-y-4">
+                                <div className="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto">
+                                    <AlertCircle size={28} />
+                                </div>
+                                <p className="text-sm text-slate-600">
+                                    This reset link has expired or is invalid. Please request a new one.
+                                </p>
+                                <Link href="/login" className="btn btn-primary inline-block text-sm">
+                                    Back to Login
+                                </Link>
+                            </div>
+                        ) : !ready ? (
+                            <div className="text-center py-4">
+                                <Loader2 className="animate-spin h-6 w-6 text-slate-400 mx-auto" />
+                                <p className="text-sm text-slate-500 mt-2">Verifying reset link...</p>
                             </div>
                         ) : (
                             <form className="space-y-5" onSubmit={handleSubmit}>

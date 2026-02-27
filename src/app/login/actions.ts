@@ -29,19 +29,20 @@ export async function forgotPassword(formData: FormData) {
         || (referer ? new URL(referer).origin : null)
         || 'http://localhost:3000'
 
-    const redirectTo = `${origin}/auth/callback?next=/reset-password`
-
-    // Use a plain Supabase client (not cookie-based SSR) — resetPasswordForEmail
-    // is an unauthenticated operation that doesn't need cookies
+    // Use plain client with implicit flow — skips PKCE so no code_verifier is needed.
+    // Redirect goes directly to /reset-password with tokens in URL hash.
     const supabase = createSupabaseClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        { auth: { flowType: 'implicit' } },
     )
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo })
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${origin}/reset-password`,
+    })
 
     if (error) {
-        console.error('Password reset error:', error.message, '| redirectTo:', redirectTo)
+        console.error('Password reset error:', error.message)
         return { error: 'Failed to send reset email. Please try again.' }
     }
 
