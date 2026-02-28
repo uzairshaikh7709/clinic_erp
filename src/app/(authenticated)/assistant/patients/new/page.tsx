@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createBrowserClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
-import { User, Calendar, MapPin, Phone, Save, ArrowLeft } from 'lucide-react'
+import { User, MapPin, Phone, Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function NewPatientPage() {
@@ -14,7 +14,7 @@ export default function NewPatientPage() {
     const [clinicId, setClinicId] = useState<string | null>(null)
     const [formData, setFormData] = useState({
         full_name: '',
-        dob: '',
+        age: '',
         gender: 'Male',
         phone: '',
         address: ''
@@ -40,7 +40,7 @@ export default function NewPatientPage() {
 
             const { data, error } = await supabase.from('patients').insert({
                 full_name: formData.full_name,
-                dob: formData.dob,
+                age: formData.age ? parseInt(formData.age) : null,
                 gender: formData.gender,
                 address: formData.address,
                 phone: formData.phone || null,
@@ -104,17 +104,17 @@ export default function NewPatientPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-semibold text-slate-700">Date of Birth</label>
-                        <div className="relative">
-                            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                            <input
-                                required
-                                type="date"
-                                className="input pl-10 w-full"
-                                value={formData.dob}
-                                onChange={e => setFormData({ ...formData, dob: e.target.value })}
-                            />
-                        </div>
+                        <label className="text-sm font-semibold text-slate-700">Age (Years)</label>
+                        <input
+                            required
+                            type="number"
+                            min="0"
+                            max="150"
+                            className="input w-full"
+                            placeholder="e.g. 25"
+                            value={formData.age}
+                            onChange={e => setFormData({ ...formData, age: e.target.value })}
+                        />
                     </div>
 
                     <div className="space-y-2">

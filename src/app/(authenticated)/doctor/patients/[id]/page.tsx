@@ -13,7 +13,7 @@ export default async function PatientDetailPage({ params }: { params: Promise<{ 
     const [{ data: patient }, { data: prescriptions }] = await Promise.all([
         admin
             .from('patients')
-            .select('id, full_name, dob, gender, phone, address, registration_number, created_at')
+            .select('id, full_name, age, gender, phone, address, registration_number, created_at')
             .eq('id', id)
             .eq('clinic_id', clinicId)
             .single(),

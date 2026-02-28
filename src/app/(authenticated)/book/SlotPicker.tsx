@@ -125,7 +125,7 @@ export default function SlotPicker({ doctorId, userFullName, clinicId, profileId
             } else {
                 const { data: newP, error: pErr } = await supabase.from('patients').insert({
                     full_name: userFullName,
-                    dob: '1990-01-01',
+                    age: null,
                     gender: 'Other',
                     address: 'Online',
                     registration_number: 'P-' + Math.floor(Math.random() * 10000),

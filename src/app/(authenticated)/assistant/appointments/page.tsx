@@ -27,7 +27,7 @@ export default async function AssistantAppointmentsPage() {
             start_time,
             status,
             appointment_type,
-            patients (full_name, gender, dob, phone)
+            patients (full_name, gender, age, phone)
         `)
         .eq('doctor_id', profile.assigned_doctor_id)
         .eq('clinic_id', clinicId)
@@ -64,7 +64,7 @@ export default async function AssistantAppointmentsPage() {
                                     </div>
                                     <div className="min-w-0">
                                         <p className="font-semibold text-slate-900 text-sm truncate">{apt.patients?.full_name}</p>
-                                        <p className="text-xs text-slate-500">{apt.patients?.gender}{apt.patients?.dob && ` • ${new Date().getFullYear() - new Date(apt.patients.dob).getFullYear()}y`}</p>
+                                        <p className="text-xs text-slate-500">{apt.patients?.gender}{apt.patients?.age != null && ` • ${apt.patients.age}y`}</p>
                                     </div>
                                 </div>
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold capitalize flex-shrink-0
@@ -129,7 +129,7 @@ export default async function AssistantAppointmentsPage() {
                                             <div className="font-semibold text-slate-900">{apt.patients?.full_name}</div>
                                             <div className="text-xs text-slate-500">
                                                 {apt.patients?.gender}
-                                                {apt.patients?.dob && ` • ${new Date().getFullYear() - new Date(apt.patients.dob).getFullYear()}y`}
+                                                {apt.patients?.age != null && ` • ${apt.patients.age}y`}
                                             </div>
                                         </td>
                                         <td className="px-4 lg:px-6 py-3">

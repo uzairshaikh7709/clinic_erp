@@ -185,7 +185,7 @@ export default function AppointmentList({ appointments }: { appointments: any[] 
                                     </div>
                                     <div>
                                         <p className="font-semibold text-slate-900 text-sm">{apt.patients?.full_name}</p>
-                                        <p className="text-xs text-slate-500">{apt.patients?.gender}, {new Date().getFullYear() - new Date(apt.patients?.dob || '2000').getFullYear()}y</p>
+                                        <p className="text-xs text-slate-500">{apt.patients?.gender}{apt.patients?.age != null ? `, ${apt.patients.age}y` : ''}</p>
                                     </div>
                                 </div>
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold capitalize
@@ -270,7 +270,7 @@ export default function AppointmentList({ appointments }: { appointments: any[] 
                                                 </div>
                                                 <div>
                                                     <p className="font-semibold text-slate-900">{apt.patients?.full_name}</p>
-                                                    <p className="text-xs text-slate-500">{apt.patients?.gender}, {new Date().getFullYear() - new Date(apt.patients?.dob || '2000').getFullYear()}y</p>
+                                                    <p className="text-xs text-slate-500">{apt.patients?.gender}{apt.patients?.age != null ? `, ${apt.patients.age}y` : ''}</p>
                                                 </div>
                                             </div>
                                         </td>

@@ -17,7 +17,7 @@ export async function registerPatient(prevState: any, formData: FormData) {
     const admin = createAdminClient()
 
     const fullName = formData.get('full_name') as string
-    const dob = formData.get('dob') as string
+    const age = formData.get('age') as string
     const gender = formData.get('gender') as string
     const address = formData.get('address') as string
     const phone = formData.get('phone') as string
@@ -27,7 +27,7 @@ export async function registerPatient(prevState: any, formData: FormData) {
 
     const { data, error } = await admin.from('patients').insert({
         full_name: fullName,
-        dob: dob,
+        age: age ? parseInt(age) : null,
         gender: gender,
         address: address,
         phone: phone,

@@ -48,15 +48,9 @@ export default function PrescriptionView({ rx, org }: { rx: any; org: any }) {
     const regNo = rx.doctors?.registration_number || ''
     const signatureUrl = rx.doctors?.signature_url || ''
 
-    const calcAge = () => {
-        if (!rx.patients?.dob) return 'N/A'
-        const dob = new Date(rx.patients.dob)
-        const now = new Date()
-        let years = now.getFullYear() - dob.getFullYear()
-        let months = now.getMonth() - dob.getMonth()
-        if (months < 0) { years--; months += 12 }
-        if (years > 0) return `${years}Y${months > 0 ? ` ${months}M` : ''}`
-        return `${months}M`
+    const getAge = () => {
+        if (rx.patients?.age == null) return 'N/A'
+        return `${rx.patients.age}Y`
     }
 
     return (
@@ -122,7 +116,7 @@ export default function PrescriptionView({ rx, org }: { rx: any; org: any }) {
                                 </p>
                                 <p>
                                     <span className="font-semibold text-slate-600 inline-block w-24">Age / Sex:</span>
-                                    <span>{calcAge()} / {rx.patients?.gender || ''}</span>
+                                    <span>{getAge()} / {rx.patients?.gender || ''}</span>
                                 </p>
                                 <p>
                                     <span className="font-semibold text-slate-600 inline-block w-24">Regd No:</span>

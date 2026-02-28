@@ -1,7 +1,7 @@
 import { requirePharmacyEnabled } from '@/components/pharmacy/PharmacyGuard'
 import { getPharmacyDashboardStats } from '../actions'
 import Link from 'next/link'
-import { Pill, AlertTriangle, Clock, Package, Plus, ArrowDownToLine, ChevronRight, FileText, Receipt, IndianRupee } from 'lucide-react'
+import { Pill, AlertTriangle, Clock, Package, Plus, ArrowDownToLine, ChevronRight, FileText, Receipt, IndianRupee, ShoppingCart, Truck, BarChart3, Timer } from 'lucide-react'
 import { MovementTypeBadge } from '@/components/pharmacy/MovementTypeBadge'
 
 export const dynamic = 'force-dynamic'
@@ -143,11 +143,13 @@ export default async function PharmacyDashboard() {
                     </div>
                     <div className="p-3 sm:p-4 space-y-2">
                         <QuickAction href="/pharmacy/dispense" icon={FileText} label="Dispense Rx" />
+                        <QuickAction href="/pharmacy/purchases/new" icon={ShoppingCart} label="New Purchase" />
                         <QuickAction href="/pharmacy/invoices/new" icon={Receipt} label="New Invoice" />
                         <QuickAction href="/pharmacy/medicines/new" icon={Plus} label="Add Medicine" />
-                        <QuickAction href="/pharmacy/medicines" icon={Package} label="View Medicines" />
+                        <QuickAction href="/pharmacy/suppliers" icon={Truck} label="Suppliers" />
+                        <QuickAction href="/pharmacy/expiry" icon={Timer} label="Expiry Tracker" />
+                        <QuickAction href="/pharmacy/reports" icon={BarChart3} label="Reports" />
                         <QuickAction href="/pharmacy/low-stock" icon={AlertTriangle} label="Low Stock Alerts" />
-                        <QuickAction href="/pharmacy/batches" icon={Clock} label="All Batches" />
                         <QuickAction href="/pharmacy/movements" icon={ArrowDownToLine} label="Movement History" />
                     </div>
                 </div>

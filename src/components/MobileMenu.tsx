@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import {
     Menu, X, LayoutDashboard, Calendar, Users, FileText,
     Clock, Building2, UserCog, LogOut, LucideIcon, Mail, Globe, Award, Settings,
-    Pill, Package, AlertTriangle, Receipt, BarChart3
+    Pill, Package, AlertTriangle, Receipt, BarChart3, Truck, ShoppingCart, Timer
 } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 
@@ -126,10 +126,13 @@ export function MobileMenu({ role, profile }: { role: string; profile: any }) {
                                             </div>
                                             <MobileNavItem href="/pharmacy/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={close} />
                                             <MobileNavItem href="/pharmacy/medicines" icon={Package} label="Medicines" onClick={close} />
+                                            <MobileNavItem href="/pharmacy/purchases" icon={ShoppingCart} label="Purchases" onClick={close} />
+                                            <MobileNavItem href="/pharmacy/suppliers" icon={Truck} label="Suppliers" onClick={close} />
                                             <MobileNavItem href="/pharmacy/dispense" icon={FileText} label="Dispense" onClick={close} />
                                             <MobileNavItem href="/pharmacy/invoices" icon={Receipt} label="Invoices" onClick={close} />
-                                            <MobileNavItem href="/pharmacy/low-stock" icon={AlertTriangle} label="Low Stock" onClick={close} />
-                                            <MobileNavItem href="/pharmacy/stats" icon={BarChart3} label="Stats & Reports" onClick={close} />
+                                            <MobileNavItem href="/pharmacy/expiry" icon={Timer} label="Expiry" onClick={close} />
+                                            <MobileNavItem href="/pharmacy/reports" icon={BarChart3} label="Reports" onClick={close} />
+                                            <MobileNavItem href="/pharmacy/stats" icon={BarChart3} label="Stats" onClick={close} />
                                         </>
                                     )}
                                 </>
@@ -149,8 +152,11 @@ export function MobileMenu({ role, profile }: { role: string; profile: any }) {
                                     </div>
                                     <MobileNavItem href="/pharmacy/dashboard" icon={LayoutDashboard} label="Dashboard" onClick={close} />
                                     <MobileNavItem href="/pharmacy/medicines" icon={Package} label="Medicines" onClick={close} />
+                                    <MobileNavItem href="/pharmacy/purchases" icon={ShoppingCart} label="Purchases" onClick={close} />
+                                    <MobileNavItem href="/pharmacy/suppliers" icon={Truck} label="Suppliers" onClick={close} />
                                     <MobileNavItem href="/pharmacy/dispense" icon={FileText} label="Dispense" onClick={close} />
                                     <MobileNavItem href="/pharmacy/invoices" icon={Receipt} label="Invoices" onClick={close} />
+                                    <MobileNavItem href="/pharmacy/expiry" icon={Timer} label="Expiry" onClick={close} />
                                     <MobileNavItem href="/pharmacy/low-stock" icon={AlertTriangle} label="Low Stock" onClick={close} />
                                 </>
                             )}

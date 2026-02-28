@@ -15,7 +15,7 @@ export default async function AssistantPatientsPage() {
         .from('appointments')
         .select(`
             patients (
-                id, full_name, dob, gender, phone, address, registration_number
+                id, full_name, age, gender, phone, address, registration_number
             )
         `)
         .eq('doctor_id', profile.assigned_doctor_id)

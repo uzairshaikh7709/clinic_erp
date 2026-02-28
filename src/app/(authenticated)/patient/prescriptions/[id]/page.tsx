@@ -53,7 +53,7 @@ export default async function PatientPrescriptionViewPage({ params }: { params: 
                 profiles (full_name)
             ),
             patients (
-                full_name, dob, gender, address, registration_number
+                full_name, age, gender, address, registration_number
             )
         `)
         .eq('id', id)
@@ -94,11 +94,7 @@ export default async function PatientPrescriptionViewPage({ params }: { params: 
                     <div className="space-y-1">
                         <p><span className="font-semibold text-slate-600 w-20 inline-block">Patient:</span> <span className="font-bold text-slate-900 text-lg">{rx.patients.full_name}</span></p>
                         <p><span className="font-semibold text-slate-600 w-20 inline-block">Age/Sex:</span>
-                            {(() => {
-                                if (!rx.patients.dob) return 'N/A'
-                                const age = new Date().getFullYear() - new Date(rx.patients.dob).getFullYear()
-                                return `${age}Y / ${rx.patients.gender || ''}`
-                            })()}
+                            {rx.patients.age != null ? `${rx.patients.age}Y / ${rx.patients.gender || ''}` : 'N/A'}
                         </p>
                         <p><span className="font-semibold text-slate-600 w-20 inline-block">ID:</span> {rx.patients.registration_number}</p>
                     </div>

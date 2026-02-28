@@ -22,7 +22,7 @@ export default function BookingWizard({ clinicId, clinicName, clinicSlug }: { cl
     // Patient fields
     const [fullName, setFullName] = useState('')
     const [phone, setPhone] = useState('')
-    const [dob, setDob] = useState('')
+    const [age, setAge] = useState('')
     const [gender, setGender] = useState('')
     const [address, setAddress] = useState('')
 
@@ -76,7 +76,7 @@ export default function BookingWizard({ clinicId, clinicName, clinicSlug }: { cl
     const handleBack = () => setStep(prev => prev - 1)
 
     const handleBook = async () => {
-        if (!selectedSlot || !fullName || !phone || !dob || !gender) return
+        if (!selectedSlot || !fullName || !phone || !age || !gender) return
 
         setBooking(true)
         setBookingError(null)
@@ -87,7 +87,7 @@ export default function BookingWizard({ clinicId, clinicName, clinicSlug }: { cl
                 time: selectedSlot.time,
                 patientName: fullName,
                 patientPhone: phone,
-                patientDob: dob,
+                patientAge: age,
                 patientGender: gender,
                 patientAddress: address || undefined
             })
@@ -263,12 +263,15 @@ export default function BookingWizard({ clinicId, clinicName, clinicSlug }: { cl
 
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                    <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Date of Birth *</label>
+                                    <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Age (Years) *</label>
                                     <input
-                                        type="date"
+                                        type="number"
+                                        min="0"
+                                        max="150"
                                         className="input w-full"
-                                        value={dob}
-                                        onChange={e => setDob(e.target.value)}
+                                        placeholder="e.g. 25"
+                                        value={age}
+                                        onChange={e => setAge(e.target.value)}
                                         required
                                     />
                                 </div>
@@ -307,7 +310,7 @@ export default function BookingWizard({ clinicId, clinicName, clinicSlug }: { cl
                                     if (!validatePhone(phone)) return
                                     handleNext()
                                 }}
-                                disabled={!fullName || !phone || !dob || !gender || !address || !!phoneError}
+                                disabled={!fullName || !phone || !age || !gender || !address || !!phoneError}
                                 className="btn btn-primary w-full h-11 text-sm mt-2"
                             >
                                 Review & Confirm
@@ -365,8 +368,8 @@ export default function BookingWizard({ clinicId, clinicName, clinicSlug }: { cl
                                     <span className="font-semibold text-slate-800">{phone}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span className="text-slate-500">DOB</span>
-                                    <span className="font-semibold text-slate-800">{dob}</span>
+                                    <span className="text-slate-500">Age</span>
+                                    <span className="font-semibold text-slate-800">{age} years</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-slate-500">Gender</span>

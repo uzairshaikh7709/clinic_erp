@@ -22,7 +22,7 @@ export default async function NewPrescriptionPage({ params }: { params: Promise<
             id,
             start_time,
             patients (
-                id, full_name, dob, gender, address, phone
+                id, full_name, age, gender, address, phone
             )
         `).eq('id', id).eq('clinic_id', clinicId).single(),
         supabase.from('prescription_templates').select('*').eq('doctor_id', doctorId).eq('clinic_id', clinicId).order('name', { ascending: true }),

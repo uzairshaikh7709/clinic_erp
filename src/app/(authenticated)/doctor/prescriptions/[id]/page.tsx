@@ -18,7 +18,7 @@ export default async function ViewPrescriptionPage({ params }: { params: Promise
                     profiles (full_name)
                 ),
                 patients (
-                    full_name, dob, gender, address, registration_number
+                    full_name, age, gender, address, registration_number
                 )
             `)
             .eq('id', id)

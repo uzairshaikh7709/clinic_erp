@@ -176,7 +176,7 @@ export default function PatientList({ patients }: { patients: any[] }) {
                                 <div className="min-w-0">
                                     <p className="font-bold text-slate-900 text-sm sm:text-base truncate group-hover:text-indigo-600 transition-colors">{p.full_name}</p>
                                     <p className="text-xs text-slate-500 truncate">
-                                        {p.gender} • {p.dob ? `${new Date().getFullYear() - new Date(p.dob).getFullYear()}y` : ''} • {p.registration_number}
+                                        {p.gender} • {p.age != null ? `${p.age}y` : ''} • {p.registration_number}
                                     </p>
                                 </div>
                             </Link>

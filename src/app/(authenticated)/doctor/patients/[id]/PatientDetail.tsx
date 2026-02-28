@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
-    ArrowLeft, FileText, Phone, MapPin, Calendar, User,
+    ArrowLeft, FileText, Phone, MapPin, User,
     Pill, Clock, Loader2, Edit, ChevronRight, Trash2
 } from 'lucide-react'
 import { createWalkInAppointment, deletePatient } from '../actions'
@@ -92,7 +92,7 @@ function TypeBadge({ type }: { type: string | null }) {
 
 export default function PatientDetail({ patient, prescriptions }: { patient: any; prescriptions: any[] }) {
     const router = useRouter()
-    const age = patient.dob ? new Date().getFullYear() - new Date(patient.dob).getFullYear() : null
+    const age = patient.age != null ? patient.age : null
 
     return (
         <div className="space-y-6 animate-enter">
@@ -144,14 +144,14 @@ export default function PatientDetail({ patient, prescriptions }: { patient: any
                             </div>
                         </div>
                     )}
-                    {patient.dob && (
+                    {age != null && (
                         <div className="flex items-center gap-2.5">
                             <div className="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
-                                <Calendar size={14} className="text-purple-600" />
+                                <User size={14} className="text-purple-600" />
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400 font-medium">Date of Birth</p>
-                                <p className="text-sm text-slate-700">{new Date(patient.dob).toLocaleDateString()}</p>
+                                <p className="text-xs text-slate-400 font-medium">Age</p>
+                                <p className="text-sm text-slate-700">{age} years</p>
                             </div>
                         </div>
                     )}

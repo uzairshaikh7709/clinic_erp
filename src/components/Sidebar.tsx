@@ -1,6 +1,6 @@
 'use client'
 
-import { LayoutDashboard, Calendar, Users, FileText, Activity, Clock, Building2, UserCog, Mail, Globe, Award, Settings, Pill, Package, AlertTriangle, Receipt, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, Calendar, Users, FileText, Activity, Clock, Building2, UserCog, Mail, Globe, Award, Settings, Pill, Package, AlertTriangle, Receipt, BarChart3, Truck, ShoppingCart, RotateCcw, Timer } from 'lucide-react'
 import { SignOutButton } from '@/components/SignOutButton'
 import { NavItem } from '@/components/NavItem'
 
@@ -50,10 +50,13 @@ export function Sidebar({ role, profile }: SidebarProps) {
                                 </div>
                                 <NavItem href="/pharmacy/dashboard" icon={LayoutDashboard} label="Dashboard" />
                                 <NavItem href="/pharmacy/medicines" icon={Package} label="Medicines" />
+                                <NavItem href="/pharmacy/purchases" icon={ShoppingCart} label="Purchases" />
+                                <NavItem href="/pharmacy/suppliers" icon={Truck} label="Suppliers" />
                                 <NavItem href="/pharmacy/dispense" icon={FileText} label="Dispense" />
                                 <NavItem href="/pharmacy/invoices" icon={Receipt} label="Invoices" />
-                                <NavItem href="/pharmacy/low-stock" icon={AlertTriangle} label="Low Stock" />
-                                <NavItem href="/pharmacy/stats" icon={BarChart3} label="Stats & Reports" />
+                                <NavItem href="/pharmacy/expiry" icon={Timer} label="Expiry" />
+                                <NavItem href="/pharmacy/reports" icon={BarChart3} label="Reports" />
+                                <NavItem href="/pharmacy/stats" icon={BarChart3} label="Stats" />
                             </>
                         )}
                     </>
@@ -73,8 +76,11 @@ export function Sidebar({ role, profile }: SidebarProps) {
                         </div>
                         <NavItem href="/pharmacy/dashboard" icon={LayoutDashboard} label="Dashboard" />
                         <NavItem href="/pharmacy/medicines" icon={Package} label="Medicines" />
+                        <NavItem href="/pharmacy/purchases" icon={ShoppingCart} label="Purchases" />
+                        <NavItem href="/pharmacy/suppliers" icon={Truck} label="Suppliers" />
                         <NavItem href="/pharmacy/dispense" icon={FileText} label="Dispense" />
                         <NavItem href="/pharmacy/invoices" icon={Receipt} label="Invoices" />
+                        <NavItem href="/pharmacy/expiry" icon={Timer} label="Expiry" />
                         <NavItem href="/pharmacy/low-stock" icon={AlertTriangle} label="Low Stock" />
                     </>
                 )}

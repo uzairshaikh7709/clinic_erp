@@ -14,7 +14,7 @@ function EditPatientModal({ patient, onClose }: { patient: any; onClose: () => v
     const backdropRef = useRef<HTMLDivElement>(null)
     const [form, setForm] = useState({
         full_name: patient.full_name || '',
-        dob: patient.dob || '',
+        age: patient.age != null ? String(patient.age) : '',
         gender: patient.gender || 'Male',
         phone: patient.phone || '',
         address: patient.address || '',
@@ -41,7 +41,7 @@ function EditPatientModal({ patient, onClose }: { patient: any; onClose: () => v
             .from('patients')
             .update({
                 full_name: form.full_name.trim(),
-                dob: form.dob || null,
+                age: form.age ? parseInt(form.age) : null,
                 gender: form.gender,
                 phone: form.phone || null,
                 address: form.address || null,
@@ -90,12 +90,15 @@ function EditPatientModal({ patient, onClose }: { patient: any; onClose: () => v
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Date of Birth</label>
+                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Age (Years)</label>
                             <input
-                                type="date"
+                                type="number"
+                                min="0"
+                                max="150"
+                                placeholder="e.g. 25"
                                 className="input h-10 text-sm w-full"
-                                value={form.dob}
-                                onChange={e => setForm({ ...form, dob: e.target.value })}
+                                value={form.age}
+                                onChange={e => setForm({ ...form, age: e.target.value })}
                             />
                         </div>
                         <div className="space-y-1.5">
@@ -207,7 +210,7 @@ export default function AssistantPatientList({ patients }: { patients: any[] }) 
                                         <p className="font-bold text-slate-900 text-sm sm:text-base truncate">{p.full_name}</p>
                                         <p className="text-xs text-slate-500 truncate">
                                             {p.registration_number} {p.gender && `• ${p.gender}`}
-                                            {p.dob && ` • ${new Date().getFullYear() - new Date(p.dob).getFullYear()}y`}
+                                            {p.age != null && ` • ${p.age}y`}
                                         </p>
                                     </div>
                                 </div>

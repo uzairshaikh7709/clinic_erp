@@ -16,7 +16,7 @@ export default async function PatientsPage() {
     const [{ data: allPatients }, { data: appts }, { data: rx }, { data: apptTypes }] = await Promise.all([
         admin
             .from('patients')
-            .select('id, full_name, dob, gender, phone, address, registration_number, created_at')
+            .select('id, full_name, age, gender, phone, address, registration_number, created_at')
             .eq('clinic_id', clinicId)
             .order('created_at', { ascending: false }),
         admin

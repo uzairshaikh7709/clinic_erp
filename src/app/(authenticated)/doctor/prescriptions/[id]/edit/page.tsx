@@ -21,7 +21,7 @@ export default async function EditPrescriptionPage({ params }: { params: Promise
         supabase.from('prescriptions').select(`
             *,
             patients (
-                id, full_name, dob, gender, address
+                id, full_name, age, gender, address
             ),
             appointments (
                 id, start_time

@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 // Known authenticated pharmacy sub-routes (not public landing pages)
-const PHARMACY_AUTH_ROUTES = ['dashboard', 'medicines', 'dispense', 'invoices', 'low-stock', 'batches', 'movements', 'audit', 'stats']
+const PHARMACY_AUTH_ROUTES = ['dashboard', 'medicines', 'dispense', 'invoices', 'low-stock', 'batches', 'movements', 'audit', 'stats', 'suppliers', 'purchases', 'purchase-returns', 'expiry', 'reports']
 
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({

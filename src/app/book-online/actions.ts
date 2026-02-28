@@ -223,12 +223,12 @@ export async function submitBooking(formData: {
     time: string
     patientName: string
     patientPhone: string
-    patientDob: string
+    patientAge: string
     patientGender: string
     patientAddress?: string
 }) {
     const supabase = createAdminClient()
-    const { doctorId, date, time, patientName: rawName, patientPhone, patientDob, patientGender, patientAddress } = formData
+    const { doctorId, date, time, patientName: rawName, patientPhone, patientAge, patientGender, patientAddress } = formData
 
     const patientName = rawName.trim()
     if (!patientName) return { error: 'Patient name is required.' }
@@ -302,7 +302,7 @@ export async function submitBooking(formData: {
             const { data: newP, error: pErr } = await supabase.from('patients').insert({
                 full_name: patientName,
                 phone: patientPhone || null,
-                dob: patientDob || '1990-01-01',
+                age: patientAge ? parseInt(patientAge) : null,
                 gender: patientGender || 'Other',
                 address: patientAddress || '',
                 registration_number: 'WEB-' + Date.now().toString(36).toUpperCase(),

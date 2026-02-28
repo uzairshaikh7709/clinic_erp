@@ -20,7 +20,7 @@ export default async function AppointmentsPage() {
             patients (
                 full_name,
                 gender,
-                dob,
+                age,
                 phone
             ),
             doctors!inner(profile_id)
