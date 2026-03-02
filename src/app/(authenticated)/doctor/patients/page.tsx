@@ -7,18 +7,10 @@ import PatientList from './PatientList'
 export default async function PatientsPage() {
     const profile = await requireRole(['doctor'])
     const doctorId = profile.doctor_id!
+    const clinicId = profile.clinic_id!
     const supabase = await createClient()
 
     if (!doctorId) return <div>Doctor profile not found.</div>
-
-    // Get clinic_id directly from user's authenticated session
-    const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('clinic_id')
-        .eq('id', profile.id)
-        .single()
-
-    const clinicId = userProfile?.clinic_id
     if (!clinicId) return <div>No clinic assigned to your account.</div>
 
     // Fetch all clinic patients + visit stats in parallel

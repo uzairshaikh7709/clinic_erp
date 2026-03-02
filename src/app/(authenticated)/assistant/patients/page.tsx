@@ -1,5 +1,5 @@
 import { requireRole } from '@/utils/auth'
-import { createAdminClient } from '@/utils/supabase/admin'
+import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import AssistantPatientList from './AssistantPatientList'
@@ -7,11 +7,11 @@ import AssistantPatientList from './AssistantPatientList'
 export default async function AssistantPatientsPage() {
     const profile = await requireRole(['assistant'])
     const clinicId = profile.clinic_id
-    const admin = createAdminClient()
+    const supabase = await createClient()
 
     if (!profile.assigned_doctor_id) return <div className="p-12 text-center text-slate-500">No doctor assigned.</div>
 
-    const { data: appointments } = await admin
+    const { data: appointments } = await supabase
         .from('appointments')
         .select(`
             patients (
