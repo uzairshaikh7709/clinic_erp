@@ -1,6 +1,7 @@
 'use server'
 
 import { createAdminClient } from '@/utils/supabase/admin'
+import { createClient } from '@/utils/supabase/server'
 import { getUserProfile } from '@/utils/auth'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
@@ -14,7 +15,7 @@ export async function registerPatient(prevState: any, formData: FormData) {
     if (!profile) return { error: 'Unauthorized' }
     const clinicId = profile.clinic_id!
 
-    const admin = createAdminClient()
+    const supabase = await createClient()
 
     const fullName = formData.get('full_name') as string
     const age = formData.get('age') as string
@@ -25,7 +26,7 @@ export async function registerPatient(prevState: any, formData: FormData) {
     // Generate Reg No
     const registrationNumber = 'P-' + Math.floor(1000 + Math.random() * 9000)
 
-    const { data, error } = await admin.from('patients').insert({
+    const { data, error } = await supabase.from('patients').insert({
         full_name: fullName,
         age: age ? parseInt(age) : null,
         gender: gender,
