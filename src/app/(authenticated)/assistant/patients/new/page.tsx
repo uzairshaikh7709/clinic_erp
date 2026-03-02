@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { registerPatient } from '../../doctor/patients/actions'
+import { registerPatient } from '@/app/(authenticated)/doctor/patients/actions'
 import { useRouter } from 'next/navigation'
 import { User, MapPin, Phone, Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
