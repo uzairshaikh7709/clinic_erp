@@ -1,18 +1,16 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createBrowserClient } from '@/utils/supabase/client'
+import { useState } from 'react'
+import { registerPatient } from '../../doctor/patients/actions'
 import { useRouter } from 'next/navigation'
 import { User, MapPin, Phone, Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
 export default function NewPatientPage() {
     const router = useRouter()
-    const supabase = createBrowserClient()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [success, setSuccess] = useState(false)
-    const [clinicId, setClinicId] = useState<string | null>(null)
     const [formData, setFormData] = useState({
         full_name: '',
         age: '',
@@ -21,35 +19,21 @@ export default function NewPatientPage() {
         address: ''
     })
 
-    useEffect(() => {
-        const fetchClinicId = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (user) {
-                const { data: profile } = await supabase.from('profiles').select('clinic_id').eq('id', user.id).single()
-                setClinicId(profile?.clinic_id ?? null)
-            }
-        }
-        fetchClinicId()
-    }, [])
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
 
         try {
-            const registrationNumber = 'P-' + Math.floor(1000 + Math.random() * 9000)
+            const payload = new FormData()
+            payload.append('full_name', formData.full_name)
+            payload.append('age', formData.age)
+            payload.append('gender', formData.gender)
+            payload.append('address', formData.address)
+            payload.append('phone', formData.phone)
 
-            const { data, error } = await supabase.from('patients').insert({
-                full_name: formData.full_name,
-                age: formData.age ? parseInt(formData.age) : null,
-                gender: formData.gender,
-                address: formData.address,
-                phone: formData.phone || null,
-                registration_number: registrationNumber,
-                clinic_id: clinicId
-            }).select().single()
+            const result = await registerPatient(null, payload)
 
-            if (error) throw error
+            if (result?.error) throw new Error(result.error)
 
             setSuccess(true)
             router.refresh()
