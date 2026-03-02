@@ -1,36 +1,45 @@
 import { requireRole } from '@/utils/auth'
-import { createAdminClient } from '@/utils/supabase/admin'
+import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import PatientList from './PatientList'
 
 export default async function PatientsPage() {
     const profile = await requireRole(['doctor'])
-    const clinicId = profile.clinic_id!
     const doctorId = profile.doctor_id!
-    const admin = createAdminClient()
+    const supabase = await createClient()
 
     if (!doctorId) return <div>Doctor profile not found.</div>
 
+    // Get clinic_id directly from user's authenticated session
+    const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('clinic_id')
+        .eq('id', profile.id)
+        .single()
+
+    const clinicId = userProfile?.clinic_id
+    if (!clinicId) return <div>No clinic assigned to your account.</div>
+
     // Fetch all clinic patients + visit stats in parallel
     const [{ data: allPatients }, { data: appts }, { data: rx }, { data: apptTypes }] = await Promise.all([
-        admin
+        supabase
             .from('patients')
             .select('id, full_name, age, gender, phone, address, registration_number, created_at')
             .eq('clinic_id', clinicId)
             .order('created_at', { ascending: false }),
-        admin
+        supabase
             .from('appointments')
             .select('patient_id')
             .eq('doctor_id', doctorId)
             .eq('clinic_id', clinicId),
-        admin
+        supabase
             .from('prescriptions')
             .select('patient_id, created_at')
             .eq('doctor_id', doctorId)
             .eq('clinic_id', clinicId)
             .order('created_at', { ascending: false }),
-        admin
+        supabase
             .from('appointments')
             .select('patient_id, appointment_type')
             .eq('doctor_id', doctorId)

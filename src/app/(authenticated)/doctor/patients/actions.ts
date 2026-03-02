@@ -13,9 +13,18 @@ export async function createPatientAttribute(formData: FormData) {
 export async function registerPatient(prevState: any, formData: FormData) {
     const profile = await getUserProfile()
     if (!profile) return { error: 'Unauthorized' }
-    const clinicId = profile.clinic_id!
 
     const supabase = await createClient()
+
+    // Fetch clinic_id directly via user's authenticated session (avoids admin key dependency)
+    const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('clinic_id')
+        .eq('id', profile.id)
+        .single()
+
+    const clinicId = userProfile?.clinic_id
+    if (!clinicId) return { error: 'No clinic assigned to your account' }
 
     const fullName = formData.get('full_name') as string
     const age = formData.get('age') as string

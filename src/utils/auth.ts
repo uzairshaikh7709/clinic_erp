@@ -14,11 +14,9 @@ export const getUserProfile = cache(async (): Promise<UserProfile | null> => {
 
     if (!user) return null
 
-    const admin = createAdminClient()
-
     // Fetch profile + role-specific ID in parallel
     const userId = user.id
-    const { data: profile } = await admin
+    const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -39,12 +37,12 @@ export const getUserProfile = cache(async (): Promise<UserProfile | null> => {
     if (profile.role === 'doctor') {
         // Fire doctor lookup + ownership check + clinic name in parallel
         const [doctorResult, ownershipResult, clinicResult] = await Promise.all([
-            admin.from('doctors').select('id').eq('profile_id', userId).single(),
+            supabase.from('doctors').select('id').eq('profile_id', userId).single(),
             profile.clinic_id
-                ? admin.from('organizations').select('id').eq('id', profile.clinic_id).eq('owner_profile_id', userId).single()
+                ? supabase.from('organizations').select('id').eq('id', profile.clinic_id).eq('owner_profile_id', userId).single()
                 : Promise.resolve({ data: null }),
             profile.clinic_id
-                ? admin.from('organizations').select('name, pharmacy_enabled, org_type').eq('id', profile.clinic_id).single()
+                ? supabase.from('organizations').select('name, pharmacy_enabled, org_type').eq('id', profile.clinic_id).single()
                 : Promise.resolve({ data: null })
         ])
         doctor_id = doctorResult.data?.id ?? null
@@ -54,9 +52,9 @@ export const getUserProfile = cache(async (): Promise<UserProfile | null> => {
         org_type = clinicResult.data?.org_type ?? 'clinic'
     } else if (profile.role === 'assistant') {
         const [assistantResult, clinicResult] = await Promise.all([
-            admin.from('assistants').select('id, assigned_doctor_id').eq('profile_id', userId).single(),
+            supabase.from('assistants').select('id, assigned_doctor_id').eq('profile_id', userId).single(),
             profile.clinic_id
-                ? admin.from('organizations').select('name, pharmacy_enabled, org_type').eq('id', profile.clinic_id).single()
+                ? supabase.from('organizations').select('name, pharmacy_enabled, org_type').eq('id', profile.clinic_id).single()
                 : Promise.resolve({ data: null })
         ])
         assistant_id = assistantResult.data?.id ?? null
