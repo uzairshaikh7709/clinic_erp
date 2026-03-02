@@ -11,6 +11,7 @@ export default function NewPatientPage() {
     const supabase = createBrowserClient()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [success, setSuccess] = useState(false)
     const [clinicId, setClinicId] = useState<string | null>(null)
     const [formData, setFormData] = useState({
         full_name: '',
@@ -50,7 +51,9 @@ export default function NewPatientPage() {
 
             if (error) throw error
 
-            router.push(`/assistant/patients`)
+            setSuccess(true)
+            router.refresh()
+            setTimeout(() => router.push('/assistant/patients'), 1500)
         } catch (err: any) {
             setError(err.message)
         } finally {
@@ -146,6 +149,7 @@ export default function NewPatientPage() {
                 </div>
 
                 {error && <p className="text-sm text-red-500">{error}</p>}
+                {success && <p className="text-sm text-green-600 font-medium">Patient registered successfully! Redirecting...</p>}
 
                 <div className="pt-4 flex justify-end">
                     <button type="submit" disabled={loading} className="btn btn-primary w-full sm:w-auto min-w-[150px] justify-center">
